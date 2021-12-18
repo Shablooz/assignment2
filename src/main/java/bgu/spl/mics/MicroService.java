@@ -1,6 +1,9 @@
 package bgu.spl.mics;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Queue;
 
 /**
  * The MicroService is an abstract class that any micro-service in the system
@@ -22,9 +25,10 @@ import java.util.HashMap;
 
 public abstract class MicroService implements Runnable {
 
-    HashMap<Class,Callback> subscribedEvents;
+    private HashMap<Class<? extends Message>,Callback> subscribedEvents;
     private boolean terminated = false;
     private final String name;
+    private static MessageBusImpl messageBus;
 
     /**
      * @param name the micro-service name (used mainly for debugging purposes -
@@ -80,7 +84,7 @@ public abstract class MicroService implements Runnable {
      *                 queue.
      */
     protected final <B extends Broadcast> void subscribeBroadcast(Class<B> type, Callback<B> callback) {
-        //TODO: implement this.
+
     }
 
     /**
@@ -96,8 +100,7 @@ public abstract class MicroService implements Runnable {
      * 	       			null in case no micro-service has subscribed to {@code e.getClass()}.
      */
     protected final <T> Future<T> sendEvent(Event<T> e) {
-        Future<T> future=new Future<T>();
-        return null; //TODO: delete this line :)
+        return messageBus.getInstence().sendEvent(e);
     }
 
     /**
@@ -107,7 +110,7 @@ public abstract class MicroService implements Runnable {
      * @param b The broadcast message to send
      */
     protected final void sendBroadcast(Broadcast b) {
-        //TODO: implement this.
+        messageBus.getInstence().sendBroadcast(b);
     }
 
     /**
@@ -121,7 +124,7 @@ public abstract class MicroService implements Runnable {
      *               {@code e}.
      */
     protected final <T> void complete(Event<T> e, T result) {
-        //TODO: implement this.
+        messageBus.getInstence().complete(e,result);
     }
 
     /**
@@ -153,7 +156,13 @@ public abstract class MicroService implements Runnable {
     public final void run() {
         initialize();
         while (!terminated) {
-            System.out.println("NOT IMPLEMENTED!!!"); //TODO: you should delete this line :)
+            Message message = null;
+            try {
+                message=messageBus.getInstence().awaitMessage(this);
+            }
+            catch (InterruptedException e){
+                subscribedEvents.get(message.getClass()).call(message);
+            }
         }
     }
 

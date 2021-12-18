@@ -1,6 +1,8 @@
 package bgu.spl.mics.application.objects;
 
 
+import java.util.ArrayList;
+
 /**
  * Passive object representing the cluster.
  * <p>
@@ -10,7 +12,8 @@ package bgu.spl.mics.application.objects;
  */
 public class Cluster {
 
-
+	private ArrayList<GPU> GPUs;
+	private ArrayList<CPU> CPUs;
 	/**
      * Retrieves the single instance of this class.
      */

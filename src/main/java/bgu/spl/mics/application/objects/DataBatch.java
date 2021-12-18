@@ -6,5 +6,12 @@ package bgu.spl.mics.application.objects;
  */
 
 public class DataBatch {
-    
+
+    int Size;
+    int Ticks; //ticks to process
+
+    public DataBatch(int size,int Ticks){
+        Size=size;
+        this.Ticks=Ticks;
+    }
 }

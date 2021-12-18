@@ -13,4 +13,15 @@ public class GPU {
 
     private Type type;
 
+    private int VRAM;
+    private Cluster cluster;
+
+    public GPU(Type type){
+        if(type==Type.RTX3090)
+            VRAM=32;
+        if(type==Type.RTX2080)
+            VRAM=16;
+        if(type==Type.GTX1080)
+            VRAM=8;
+    }
 }

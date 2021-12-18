@@ -9,63 +9,92 @@ import java.util.*;
  */
 public class MessageBusImpl implements MessageBus {
 
-	private HashMap<MicroService, Queue<Event>> registeredServices;
-	private HashMap<Class,Queue<MicroService>> SubscribedMircoServices;
+	private final HashMap<MicroService, Queue<Message>> registeredServices;
+	private final HashMap<Class<? extends Event>,Queue<MicroService>> SubscribedMircoServiceEvent;
+	private final HashMap<Class<? extends Broadcast>,Queue<MicroService>> SubscribedMircoServiceBroadCasts;
+	private final HashMap<Class<? extends Event>,Future> ActiveFutures;
 
 	private static final class InstanceHolder {
 		static final MessageBusImpl instance = new MessageBusImpl();
 	}
-
+	private MessageBusImpl(){
+		registeredServices=new HashMap<>();
+		SubscribedMircoServiceBroadCasts=new HashMap<>();
+		SubscribedMircoServiceEvent=new HashMap<>();
+		ActiveFutures=new HashMap<>();
+	}
 	public MessageBusImpl getInstence(){
 		return InstanceHolder.instance;
 	}
 	@Override
 	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) {
-		if(SubscribedMircoServices.containsKey(type)){
-			SubscribedMircoServices.get(type).add(m);
+		if(SubscribedMircoServiceEvent.containsKey(type)){
+			SubscribedMircoServiceEvent.get(type).add(m);
 		}
 		else{
-			SubscribedMircoServices.put(type, new ArrayDeque<MicroService>());
-			SubscribedMircoServices.get(type).add(m);
+			synchronized (SubscribedMircoServiceEvent){
+			if(!SubscribedMircoServiceEvent.containsKey(type))
+				SubscribedMircoServiceEvent.put(type, new ArrayDeque<MicroService>());
+			}
+				SubscribedMircoServiceEvent.get(type).add(m);
 
 		}
 	}
 
 	@Override
 	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
-		// TODO Auto-generated method stub
-
+		if(SubscribedMircoServiceBroadCasts.containsKey(type)){
+			SubscribedMircoServiceBroadCasts.get(type).add(m);
+		}
+		else{
+			synchronized (SubscribedMircoServiceBroadCasts) {
+				if (!SubscribedMircoServiceBroadCasts.containsKey(type))
+					SubscribedMircoServiceBroadCasts.put(type, new ArrayDeque<MicroService>());
+			}
+			SubscribedMircoServiceBroadCasts.get(type).add(m);
+		}
 	}
 
 	@Override
 	public <T> void complete(Event<T> e, T result) {
-		// TODO Auto-generated method stub
+		Future future=ActiveFutures.get(e);
+		future.resolve(result);
 
 	}
 
 	@Override
 	public void sendBroadcast(Broadcast b) {
-		// TODO Auto-generated method stub
-
+		Queue<MicroService> subbed=SubscribedMircoServiceBroadCasts.get(b);
+		for(MicroService service : subbed){
+			registeredServices.get(service).add(b);
+			service.notify();
+		}
 	}
 
 
 	@Override
 	public <T> Future<T> sendEvent(Event<T> e) {
-		// TODO Auto-generated method stub
-		return null;
+		Queue<MicroService> subbed=SubscribedMircoServiceEvent.get(e);
+		if(subbed.isEmpty())
+			return null;
+		Future<T> future=new Future<T>();
+		ActiveFutures.put(e.getClass(),future);
+		MicroService m=subbed.poll();
+		subbed.add(m);
+		registeredServices.get(m).add(e);
+		m.notify();
+		return future;
 	}
 
 	@Override
 	public void register(MicroService m) {
-		registeredServices.put(m,new PriorityQueue<Event>());
+		registeredServices.put(m,new PriorityQueue<>());
 
 	}
 
 	@Override
 	public void unregister(MicroService m) {
 		registeredServices.remove(m);
-
 	}
 
 	@Override
@@ -74,9 +103,9 @@ public class MessageBusImpl implements MessageBus {
 			throw new IllegalStateException("MicroService Not Registered");
 		}
 		while(registeredServices.get(m).isEmpty()){
-			m.wait(100);
+			m.wait();
 		}
-		return registeredServices.get(m).remove();
+		return registeredServices.get(m).poll();
 
 
 	}
