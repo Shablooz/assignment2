@@ -1,8 +1,6 @@
 package bgu.spl.mics;
 
-import java.util.HashMap;
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.*;
 
 /**
  * The {@link MessageBusImpl class is the implementation of the MessageBus interface.
@@ -12,6 +10,7 @@ import java.util.Queue;
 public class MessageBusImpl implements MessageBus {
 
 	private HashMap<MicroService, Queue<Event>> registeredServices;
+	private HashMap<Class,Queue<MicroService>> SubscribedMircoServices;
 
 	private static final class InstanceHolder {
 		static final MessageBusImpl instance = new MessageBusImpl();
@@ -22,8 +21,14 @@ public class MessageBusImpl implements MessageBus {
 	}
 	@Override
 	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) {
-		m.subscribeEvent(type,(c) -> {}); //TODO
+		if(SubscribedMircoServices.containsKey(type)){
+			SubscribedMircoServices.get(type).add(m);
+		}
+		else{
+			SubscribedMircoServices.put(type, new ArrayDeque<MicroService>());
+			SubscribedMircoServices.get(type).add(m);
 
+		}
 	}
 
 	@Override
