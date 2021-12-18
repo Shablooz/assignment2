@@ -14,7 +14,7 @@ public class MessageBusImpl implements MessageBus {
 	private final HashMap<Class<? extends Broadcast>,Queue<MicroService>> SubscribedMircoServiceBroadCasts;
 	private final HashMap<Class<? extends Event>,Future> ActiveFutures;
 
-	private static final class InstanceHolder {
+	private  static  final class InstanceHolder {
 		static final MessageBusImpl instance = new MessageBusImpl();
 	}
 	private MessageBusImpl(){

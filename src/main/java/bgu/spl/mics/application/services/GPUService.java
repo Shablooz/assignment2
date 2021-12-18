@@ -17,16 +17,18 @@ import java.util.ArrayList;
  */
 public class GPUService extends MicroService {
 
-    ArrayList<GPU> GPUs;
+    GPU gpu;
 
-    public GPUService(String name) {
+    public GPUService(String name,GPU gpu) {
         super(name);
-        // TODO Implement this
+        this.gpu=gpu;
     }
 
     @Override
     protected void initialize() {
-        // TODO Implement this
-
+        subscribeBroadcast(TickBroadcast.class,(tick)->{});
+        subscribeEvent(TrainModelEvent.class,c -> {
+            
+        });
     }
 }

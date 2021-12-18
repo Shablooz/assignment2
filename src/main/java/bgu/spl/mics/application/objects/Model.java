@@ -7,4 +7,48 @@ package bgu.spl.mics.application.objects;
  */
 public class Model {
 
+    private final Data data;
+    private Status status;
+    private final Student student;
+    private final String name;
+
+    enum Status {
+        PreTrained, Training, Trained, Tested
+    }
+
+    public Model(String name, Data data, Student student) {
+        this.name = name;
+        this.data = data;
+        this.student = student;
+        status=Status.PreTrained;
+    }
+
+    public Data getData() {
+        return data;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Student getStudent() {
+        return student;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void StartTraining(){
+        if(status==Status.PreTrained)
+            status=Status.Training;
+    }
+    public void FinishTraining(){
+        if(status==Status.Training)
+            status=Status.Trained;
+    }
+    public void TestModel(){
+        if(status==Status.Trained)
+            status=Status.Tested;
+    }
 }

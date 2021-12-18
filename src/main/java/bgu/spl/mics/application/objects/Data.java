@@ -8,11 +8,24 @@ public class Data {
     /**
      * Enum representing the Data type.
      */
-    enum Type {
+    public enum Type {
         Images, Text, Tabular
     }
 
     private Type type;
     private int processed;
     private int size;
+
+    public Data(Type type,int size){
+        this.type=type;
+        this.size=size;
+    }
+
+    public int getSize() {
+        return size;
+    }
+
+    public Type getType() {
+        return type;
+    }
 }

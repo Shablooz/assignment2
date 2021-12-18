@@ -18,4 +18,29 @@ public class Student {
     private int publications;
     private int papersRead;
 
+    public Degree getDegree() {
+        return status;
+    }
+
+    public int getName() {
+        return name;
+    }
+
+    public int getPapersRead() {
+        return papersRead;
+    }
+
+    public int getPublications() {
+        return publications;
+    }
+
+    public String getDepartment() {
+        return department;
+    }
+    public void PublishPaper(){
+        publications++;
+    }
+    public void ReadPaper(){
+        papersRead++;
+    }
 }

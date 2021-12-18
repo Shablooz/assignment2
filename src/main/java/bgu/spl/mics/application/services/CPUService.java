@@ -1,6 +1,7 @@
 package bgu.spl.mics.application.services;
 
 import bgu.spl.mics.MicroService;
+import bgu.spl.mics.application.objects.CPU;
 
 /**
  * CPU service is responsible for handling the {@link DataPreProcessEvent}.
@@ -11,9 +12,10 @@ import bgu.spl.mics.MicroService;
  */
 public class CPUService extends MicroService {
     int timeUsed;
-    public CPUService(String name) {
+    CPU cpu;
+    public CPUService(String name,CPU cpu) {
         super(name);
-        // TODO Implement this
+        this.cpu=cpu;
     }
 
     @Override
