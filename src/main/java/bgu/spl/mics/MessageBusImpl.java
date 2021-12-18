@@ -1,5 +1,9 @@
 package bgu.spl.mics;
 
+import java.util.HashMap;
+import java.util.PriorityQueue;
+import java.util.Queue;
+
 /**
  * The {@link MessageBusImpl class is the implementation of the MessageBus interface.
  * Write your implementation here!
@@ -7,9 +11,18 @@ package bgu.spl.mics;
  */
 public class MessageBusImpl implements MessageBus {
 
+	private HashMap<MicroService, Queue<Event>> registeredServices;
+
+	private static final class InstanceHolder {
+		static final MessageBusImpl instance = new MessageBusImpl();
+	}
+
+	public MessageBusImpl getInstence(){
+		return InstanceHolder.instance;
+	}
 	@Override
 	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) {
-		// TODO Auto-generated method stub
+		m.subscribeEvent(type,(c) -> {}); //TODO
 
 	}
 
@@ -31,7 +44,7 @@ public class MessageBusImpl implements MessageBus {
 
 	}
 
-	
+
 	@Override
 	public <T> Future<T> sendEvent(Event<T> e) {
 		// TODO Auto-generated method stub
@@ -40,22 +53,29 @@ public class MessageBusImpl implements MessageBus {
 
 	@Override
 	public void register(MicroService m) {
-		// TODO Auto-generated method stub
+		registeredServices.put(m,new PriorityQueue<Event>());
 
 	}
 
 	@Override
 	public void unregister(MicroService m) {
-		// TODO Auto-generated method stub
+		registeredServices.remove(m);
 
 	}
 
 	@Override
 	public Message awaitMessage(MicroService m) throws InterruptedException {
-		// TODO Auto-generated method stub
-		return null;
+		if(!registeredServices.containsKey(m)){
+			throw new IllegalStateException("MicroService Not Registered");
+		}
+		while(registeredServices.get(m).isEmpty()){
+			m.wait(100);
+		}
+		return registeredServices.get(m).remove();
+
+
 	}
 
-	
+
 
 }
