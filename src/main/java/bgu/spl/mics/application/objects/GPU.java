@@ -11,17 +11,18 @@ public class GPU {
      */
     enum Type {RTX3090, RTX2080, GTX1080}
 
-    private Type type;
+    private final Type type;
 
-    private int VRAM;
+    private final int VRAM;
     private Cluster cluster;
 
-    public GPU(Type type){
+    public GPU(Type type, Cluster cluster){
+        this.cluster = cluster;
         if(type==Type.RTX3090)
             VRAM=32;
-        if(type==Type.RTX2080)
+        else if(type==Type.RTX2080)
             VRAM=16;
-        if(type==Type.GTX1080)
-            VRAM=8;
+        else VRAM=8;
+        this.type=type;
     }
 }

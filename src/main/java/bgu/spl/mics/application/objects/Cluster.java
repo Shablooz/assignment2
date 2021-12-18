@@ -1,7 +1,10 @@
 package bgu.spl.mics.application.objects;
 
 
+import bgu.spl.mics.MessageBusImpl;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Passive object representing the cluster.
@@ -14,12 +17,15 @@ public class Cluster {
 
 	private ArrayList<GPU> GPUs;
 	private ArrayList<CPU> CPUs;
-	/**
-     * Retrieves the single instance of this class.
-     */
-	public static Cluster getInstance() {
-		//TODO: Implement this
-		return null;
+
+	private  static  final class InstanceHolder {
+		static final Cluster instance = new Cluster();
+	}
+	private Cluster(){
+	}
+
+	public Cluster getInstence(){
+		return Cluster.InstanceHolder.instance;
 	}
 
 }

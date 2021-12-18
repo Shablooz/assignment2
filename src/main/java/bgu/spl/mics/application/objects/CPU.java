@@ -7,5 +7,8 @@ package bgu.spl.mics.application.objects;
  */
 public class CPU {
 
-   // public CPU(int cores)
+    private final int cores;
+    public CPU(int cores){
+        this.cores=cores;
+    }
 }
