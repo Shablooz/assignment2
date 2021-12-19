@@ -1,8 +1,6 @@
 package bgu.spl.mics.application;
 
-import bgu.spl.mics.application.objects.Data;
-import bgu.spl.mics.application.objects.Model;
-import bgu.spl.mics.application.objects.Student;
+import bgu.spl.mics.application.objects.*;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -39,15 +37,46 @@ public class CRMSRunner {
                 String statusS = studentJsonObject.get("status").getAsString();
                 Student.Degree degree = Student.Degree.valueOf(statusS);
                 JsonArray jsonArrayModels = studentJsonObject.get("models").getAsJsonArray();
-                List<Model> models = new ArrayList<>();
                 Student student = new Student(name, department, degree);
                 for (JsonElement modelElement:jsonArrayModels) {
                     JsonObject modelJsonObject = modelElement.getAsJsonObject();
+                    String modelName = studentJsonObject.get("name").getAsString();
                     String typeS = modelJsonObject.get("type").getAsString();
                     Data.Type type = Data.Type.valueOf(typeS);
                     int size = modelJsonObject.get("size").getAsInt();
                     Data data = new Data(type, size);
+                    Model model = new Model(modelName, data, student);
+                    student.addModel(model);
                 }
+                students.add(student);
+            }
+            JsonArray jsonArrayConferences = fileObject.get("Conferences").getAsJsonArray();
+            List<ConfrenceInformation> conferences = new ArrayList<>();
+            for (JsonElement conferenceElement:jsonArrayConferences) {
+                JsonObject conferenceJsonObject = conferenceElement.getAsJsonObject();
+                String name = conferenceJsonObject.get("name").getAsString();
+                int date = conferenceJsonObject.get("date").getAsInt();
+                ConfrenceInformation confrenceInformation = new ConfrenceInformation(name, date);
+                conferences.add(confrenceInformation);
+            }
+            JsonArray cpusJson = fileObject.get("CPUS").getAsJsonArray();
+            List<Integer> coresList = new ArrayList<>();
+            for(JsonElement cpuElement: cpusJson){
+                coresList.add(cpuElement.getAsInt());
+            }
+            JsonArray gpusJson = fileObject.get("GPUS").getAsJsonArray();
+            List<String> typeList = new ArrayList<>();
+            for(JsonElement gpuElement: gpusJson){
+                typeList.add(gpuElement.getAsString());
+            }
+            for (Integer cores:coresList) {
+                CPU cpu = new CPU(cores);
+                Cluster.getInstance().addCPU(cpu);
+            }
+            for (String typeS:typeList) {
+                GPU.Type type = GPU.Type.valueOf(typeS);
+                GPU gpu = new GPU(type);
+                Cluster.getInstance().addGPU(gpu);
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();

@@ -12,7 +12,7 @@ public class GPU {
     /**
      * Enum representing the type of the GPU.
      */
-    enum Type {RTX3090, RTX2080, GTX1080}
+    public enum Type {RTX3090, RTX2080, GTX1080}
 
     private final Type type;
 
@@ -29,7 +29,7 @@ public class GPU {
     }
     public void sendSample(TrainModelEvent modelEvent) {
         DataBatch batch=modelEvent.getModel().getNextBatch();
-        cluster.getInstence().ProcessBatch(this, batch);
+        cluster.getInstance().ProcessBatch(this, batch);
         modelEvent.getModel().addProcessedBatch(batch);
     }
 

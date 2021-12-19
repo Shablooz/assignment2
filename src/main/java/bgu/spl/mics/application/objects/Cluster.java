@@ -25,11 +25,17 @@ public class Cluster {
 	private Cluster(){
 	}
 
-	public Cluster getInstence(){
+	public static Cluster getInstance(){
 		return Cluster.InstanceHolder.instance;
 	}
 
 	public DataBatch ProcessBatch(GPU gpu, DataBatch dataBatch){
 		return null;
+	}
+	public void addGPU(GPU gpu){
+		GPUs.add(gpu);
+	}
+	public void addCPU(CPU cpu){
+		CPUs.add(cpu);
 	}
 }
