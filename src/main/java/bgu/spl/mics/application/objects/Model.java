@@ -12,8 +12,9 @@ public class Model {
     private final Student student;
     private final String name;
     private boolean processed=false;
+    private boolean published;
 
-    enum Status {
+    public enum Status {
         PreTrained, Training, Trained, Tested
     }
 
@@ -22,6 +23,7 @@ public class Model {
         this.data = data;
         this.student = student;
         status=Status.PreTrained;
+        published = false;
     }
 
     public Data getData() {
@@ -60,5 +62,11 @@ public class Model {
     }
     public void addProcessedBatch(DataBatch batch){
         data.addProcessed(batch);
+    }
+    public boolean getPublished(){
+        return published;
+    }
+    public void publish(){
+        published = true;
     }
 }

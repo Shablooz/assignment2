@@ -7,9 +7,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.jmx.remote.internal.ArrayQueue;
 import jdk.internal.org.objectweb.asm.Type;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -78,8 +77,39 @@ public class CRMSRunner {
                 GPU gpu = new GPU(type);
                 Cluster.getInstance().addGPU(gpu);
             }
-        } catch (FileNotFoundException e) {
+            //OUTPUT
+            StringBuilder OutputS = new StringBuilder();
+            for(Student student:students){
+                StringBuilder studentDetails = new StringBuilder(student.getName() + "\n");
+                for (Model model:student.getModels()){
+                    if (model.getStatus() == Model.Status.Trained || model.getStatus() == Model.Status.Tested){
+                        studentDetails.append(model.getName()).append(", ");
+                        studentDetails.append(model.getData().getType()).append(", ");
+                        studentDetails.append(model.getData().getSize());
+                        if (model.getPublished())
+                            studentDetails.append(", Published.\n");
+                        else
+                            studentDetails.append("\n");
+                    }
+                }
+                studentDetails.append(student.getPapersRead()).append("\n");
+                OutputS.append(studentDetails);
+            }
+            for (ConfrenceInformation confrence: conferences){
+                StringBuilder conferenceDetails = new StringBuilder();
+                conferenceDetails.append(confrence.getName()).append("\n");
+                for(String publication:confrence.getModelsPublished()){
+                    conferenceDetails.append(publication).append("\n");
+                }
+                OutputS.append(conferenceDetails).append("\n");
+            }
+            File Output = new File("Output.txt");
+            FileWriter myWriter = new FileWriter("Output.txt");
+            myWriter.write(String.valueOf(OutputS));
+            myWriter.close();
+        } catch (IOException e) {
             e.printStackTrace();
             }
+
     }
 }
