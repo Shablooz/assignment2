@@ -4,6 +4,7 @@ import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.Messages.*;
 import bgu.spl.mics.application.objects.*;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 
 /**
@@ -18,7 +19,7 @@ import java.util.ArrayList;
 public class GPUService extends MicroService {
 
     GPU gpu;
-
+    private ArrayDeque<TrainModelEvent> toProcess;
     public GPUService(String name,GPU gpu) {
         super(name);
         this.gpu=gpu;
@@ -26,9 +27,11 @@ public class GPUService extends MicroService {
 
     @Override
     protected void initialize() {
-        subscribeBroadcast(TickBroadcast.class,(tick)->{});
-        subscribeEvent(TrainModelEvent.class,c -> {
-            
+        subscribeBroadcast(TickBroadcast.class,(tick)->{
+            gpu.sendSample(toProcess.getFirst());
+        });
+        subscribeEvent(TrainModelEvent.class,model -> {
+            toProcess.addLast(model);
         });
     }
 }

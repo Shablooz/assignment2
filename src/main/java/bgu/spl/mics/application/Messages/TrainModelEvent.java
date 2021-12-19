@@ -16,4 +16,8 @@ public class TrainModelEvent implements Event {
     public Data.Type getType(){
         return model.getData().getType();
     }
+
+    public Model getModel() {
+        return model;
+    }
 }

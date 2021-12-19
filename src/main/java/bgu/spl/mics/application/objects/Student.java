@@ -2,40 +2,39 @@ package bgu.spl.mics.application.objects;
 
 import com.sun.jmx.remote.internal.ArrayQueue;
 
-import java.util.Queue;
+import java.util.ArrayDeque;
 
 /**
  * Passive object representing single student.
  * Add fields and methods to this class as you see fit (including public methods and constructors).
  */
 public class Student {
-    public Student(int name, String department, Degree status, ArrayQueue<Model> models) {
-        this.name = name;
-        this.department = department;
-        this.status = status;
-        publications=0;
-        papersRead=0;
-        this.models=models;
-    }
-
     /**
      * Enum representing the Degree the student is studying for.
      */
-    enum Degree {
+    public enum Degree {
         MSc, PhD
     }
-    public ArrayQueue<Model> models;
-    private int name;
+    public ArrayDeque<Model> models;
+    private String name;
     private String department;
     private Degree status;
     private int publications;
     private int papersRead;
 
+    public Student(String name, String department, Degree status) {
+        this.name = name;
+        this.department = department;
+        this.status = status;
+        publications=0;
+        papersRead=0;
+        //  this.models=models;
+    }
     public Degree getDegree() {
         return status;
     }
 
-    public int getName() {
+    public String getName() {
         return name;
     }
 
@@ -55,5 +54,11 @@ public class Student {
     }
     public void ReadPaper(){
         papersRead++;
+    }
+    public void addModel(Model model){
+        this.models.addFirst(model);
+    }
+    public ArrayDeque<Model> getModels() {
+        return models;
     }
 }

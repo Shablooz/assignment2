@@ -3,6 +3,7 @@ package bgu.spl.mics.application.objects;
 
 import bgu.spl.mics.MessageBusImpl;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -28,4 +29,7 @@ public class Cluster {
 		return Cluster.InstanceHolder.instance;
 	}
 
+	public DataBatch ProcessBatch(GPU gpu, DataBatch dataBatch){
+		return null;
+	}
 }

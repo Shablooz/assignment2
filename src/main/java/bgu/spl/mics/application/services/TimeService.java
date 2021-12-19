@@ -27,8 +27,8 @@ public class TimeService extends MicroService{
 
 	@Override
 	protected void initialize() {
-		sendBroadcast(new TickBroadcast());
-
+		for(int i=0;i<duration/speed;i++)
+			sendBroadcast(new TickBroadcast());
 	}
 
 }

@@ -11,6 +11,7 @@ public class Model {
     private Status status;
     private final Student student;
     private final String name;
+    private boolean processed=false;
 
     enum Status {
         PreTrained, Training, Trained, Tested
@@ -34,7 +35,9 @@ public class Model {
     public Student getStudent() {
         return student;
     }
-
+    public boolean getProcessingStatus(){
+        return processed;
+    }
     public Status getStatus() {
         return status;
     }
@@ -46,9 +49,16 @@ public class Model {
     public void FinishTraining(){
         if(status==Status.Training)
             status=Status.Trained;
+            processed=true;
     }
     public void TestModel(){
         if(status==Status.Trained)
             status=Status.Tested;
+    }
+    public DataBatch getNextBatch(){
+        return data.getDataBatchToProcess();
+    }
+    public void addProcessedBatch(DataBatch batch){
+        data.addProcessed(batch);
     }
 }

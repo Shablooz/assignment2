@@ -3,6 +3,7 @@ package bgu.spl.mics.application.services;
 import bgu.spl.mics.Future;
 import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.Messages.*;
+import bgu.spl.mics.application.objects.Model;
 import bgu.spl.mics.application.objects.Student;
 
 /**
@@ -24,7 +25,10 @@ public class StudentService extends MicroService {
     @Override
     protected void initialize() {
         subscribeBroadcast(PublishConferenceBroadcast.class,broadcast -> {});
-      //  Future<TrainModelEvent> future=sendEvent(TrainModelEvent.class);
+        for(Model model : student.getModels()) {
+            Future<TrainModelEvent> future =(Future<TrainModelEvent>) sendEvent(new TrainModelEvent(model));
+            future.get();
+        }
 
     }
 }

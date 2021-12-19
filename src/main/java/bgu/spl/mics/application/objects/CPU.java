@@ -11,4 +11,8 @@ public class CPU {
     public CPU(int cores){
         this.cores=cores;
     }
+
+    public void ProcessBatch(DataBatch batch){
+        batch.Process(cores);
+    }
 }
