@@ -34,4 +34,5 @@ public class GPUService extends MicroService {
             toProcess.addLast(model);
         });
     }
+
 }

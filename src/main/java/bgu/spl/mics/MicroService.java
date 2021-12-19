@@ -28,7 +28,7 @@ public abstract class MicroService implements Runnable {
     private HashMap<Class<? extends Message>,Callback> subscribedEvents;
     private boolean terminated = false;
     private final String name;
-    private static MessageBusImpl messageBus;
+ //   private static MessageBusImpl messageBus;
 
     /**
      * @param name the micro-service name (used mainly for debugging purposes -
@@ -36,6 +36,7 @@ public abstract class MicroService implements Runnable {
      */
     public MicroService(String name) {
         this.name = name;
+        subscribedEvents=new HashMap<>();
     }
 
     /**
@@ -100,7 +101,7 @@ public abstract class MicroService implements Runnable {
      * 	       			null in case no micro-service has subscribed to {@code e.getClass()}.
      */
     protected final <T> Future<T> sendEvent(Event<T> e) {
-        return messageBus.getInstence().sendEvent(e);
+        return MessageBusImpl.getInstence().sendEvent(e);
     }
 
     /**
@@ -110,7 +111,7 @@ public abstract class MicroService implements Runnable {
      * @param b The broadcast message to send
      */
     protected final void sendBroadcast(Broadcast b) {
-        messageBus.getInstence().sendBroadcast(b);
+        MessageBusImpl.getInstence().sendBroadcast(b);
     }
 
     /**
@@ -124,7 +125,7 @@ public abstract class MicroService implements Runnable {
      *               {@code e}.
      */
     protected final <T> void complete(Event<T> e, T result) {
-        messageBus.getInstence().complete(e,result);
+        MessageBusImpl.getInstence().complete(e,result);
     }
 
     /**
@@ -154,11 +155,12 @@ public abstract class MicroService implements Runnable {
      */
     @Override
     public final void run() {
+        MessageBusImpl.getInstence().register(this);
         initialize();
         while (!terminated) {
             Message message = null;
             try {
-                message=messageBus.getInstence().awaitMessage(this);
+                message=MessageBusImpl.getInstence().awaitMessage(this);
             }
             catch (InterruptedException e){
                 subscribedEvents.get(message.getClass()).call(message);

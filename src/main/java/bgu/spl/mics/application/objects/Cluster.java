@@ -6,6 +6,7 @@ import bgu.spl.mics.MessageBusImpl;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Queue;
 
 /**
  * Passive object representing the cluster.
@@ -18,18 +19,25 @@ public class Cluster {
 
 	private ArrayList<GPU> GPUs;
 	private ArrayList<CPU> CPUs;
+	private HashMap<GPU, Queue<DataBatch>> ProcessedBatches;
 
-	private  static  final class InstanceHolder {
+	private static final class InstanceHolder {
 		static final Cluster instance = new Cluster();
 	}
 	private Cluster(){
+		GPUs=new ArrayList<>();
+		CPUs=new ArrayList<>();
 	}
-
-	public Cluster getInstence(){
+	public static Cluster getInstance(){
 		return Cluster.InstanceHolder.instance;
 	}
-
 	public DataBatch ProcessBatch(GPU gpu, DataBatch dataBatch){
 		return null;
+	}
+	public void addGPU(GPU gpu){
+		GPUs.add(gpu);
+	}
+	public void addCPU(CPU cpu){
+		CPUs.add(cpu);
 	}
 }

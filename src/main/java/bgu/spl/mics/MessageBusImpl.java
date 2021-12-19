@@ -22,8 +22,9 @@ public class MessageBusImpl implements MessageBus {
 		SubscribedMircoServiceBroadCasts=new HashMap<>();
 		SubscribedMircoServiceEvent=new HashMap<>();
 		ActiveFutures=new HashMap<>();
+
 	}
-	public MessageBusImpl getInstence(){
+	public static MessageBusImpl getInstence(){
 		return InstanceHolder.instance;
 	}
 	@Override
@@ -75,7 +76,7 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	public <T> Future<T> sendEvent(Event<T> e) {
 		Queue<MicroService> subbed=SubscribedMircoServiceEvent.get(e);
-		if(subbed.isEmpty())
+		if(subbed==null || subbed.isEmpty())
 			return null;
 		Future<T> future=new Future<T>();
 		ActiveFutures.put(e.getClass(),future);
@@ -103,7 +104,9 @@ public class MessageBusImpl implements MessageBus {
 			throw new IllegalStateException("MicroService Not Registered");
 		}
 		while(registeredServices.get(m).isEmpty()){
-			m.wait();
+			synchronized (m) {
+				m.wait();
+			}
 		}
 		return registeredServices.get(m).poll();
 
