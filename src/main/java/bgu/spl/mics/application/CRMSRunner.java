@@ -1,16 +1,18 @@
 package bgu.spl.mics.application;
 
-import bgu.spl.mics.application.Messages.TrainModelEvent;
-import bgu.spl.mics.application.objects.Data;
-import bgu.spl.mics.application.objects.GPU;
-import bgu.spl.mics.application.objects.Model;
-import bgu.spl.mics.application.objects.Student;
-import bgu.spl.mics.application.services.GPUService;
-import bgu.spl.mics.application.services.StudentService;
-
+import bgu.spl.mics.application.objects.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.sun.jmx.remote.internal.ArrayQueue;
+import jdk.internal.org.objectweb.asm.Type;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
 
 /** This is the Main class of Compute Resources Management System application. You should parse the input file,
  * create the different instances of the objects, and run the system.
@@ -18,19 +20,66 @@ import java.util.concurrent.TimeUnit;
  */
 public class CRMSRunner {
     public static void main(String[] args) {
-        Student student=new Student("Ben","non",Student.Degree.MSc);
-        Data data=new Data(Data.Type.Images,30000);
-        Model model=new Model("test",data,student);
-        student.addModel(model);
-   //     TrainModelEvent event=new TrainModelEvent(model);
-        StudentService service=new StudentService("service",student);
-        GPU gpu=new GPU(GPU.Type.RTX2080);
-        GPUService gpuService=new GPUService("serser",gpu);
-        Thread thread=new Thread(gpuService);
         Set<Thread> threadSet=Thread.getAllStackTraces().keySet(); //debug
-        thread.start();
-        Thread t1=new Thread(service);
-        t1.start();
+        File input = new File("example_input.json");
+        try {
+            JsonElement fileElement = JsonParser.parseReader(new FileReader(input));
+            JsonObject fileObject = fileElement.getAsJsonObject();
+            Integer TickTime = fileObject.get("TickTime").getAsInt();
+            Integer Duration = fileObject.get("Duration").getAsInt();
 
+            JsonArray jsonArrayStudents = fileObject.get("Students").getAsJsonArray();
+            List<Student> students = new ArrayList<>();
+            for (JsonElement studentElement:jsonArrayStudents) {
+                JsonObject studentJsonObject = studentElement.getAsJsonObject();
+                String name = studentJsonObject.get("name").getAsString();
+                String department = studentJsonObject.get("department").getAsString();
+                String statusS = studentJsonObject.get("status").getAsString();
+                Student.Degree degree = Student.Degree.valueOf(statusS);
+                JsonArray jsonArrayModels = studentJsonObject.get("models").getAsJsonArray();
+                Student student = new Student(name, department, degree);
+                for (JsonElement modelElement:jsonArrayModels) {
+                    JsonObject modelJsonObject = modelElement.getAsJsonObject();
+                    String modelName = studentJsonObject.get("name").getAsString();
+                    String typeS = modelJsonObject.get("type").getAsString();
+                    Data.Type type = Data.Type.valueOf(typeS);
+                    int size = modelJsonObject.get("size").getAsInt();
+                    Data data = new Data(type, size);
+                    Model model = new Model(modelName, data, student);
+                    student.addModel(model);
+                }
+                students.add(student);
+            }
+            JsonArray jsonArrayConferences = fileObject.get("Conferences").getAsJsonArray();
+            List<ConfrenceInformation> conferences = new ArrayList<>();
+            for (JsonElement conferenceElement:jsonArrayConferences) {
+                JsonObject conferenceJsonObject = conferenceElement.getAsJsonObject();
+                String name = conferenceJsonObject.get("name").getAsString();
+                int date = conferenceJsonObject.get("date").getAsInt();
+                ConfrenceInformation confrenceInformation = new ConfrenceInformation(name, date);
+                conferences.add(confrenceInformation);
+            }
+            JsonArray cpusJson = fileObject.get("CPUS").getAsJsonArray();
+            List<Integer> coresList = new ArrayList<>();
+            for(JsonElement cpuElement: cpusJson){
+                coresList.add(cpuElement.getAsInt());
+            }
+            JsonArray gpusJson = fileObject.get("GPUS").getAsJsonArray();
+            List<String> typeList = new ArrayList<>();
+            for(JsonElement gpuElement: gpusJson){
+                typeList.add(gpuElement.getAsString());
+            }
+            for (Integer cores:coresList) {
+                CPU cpu = new CPU(cores);
+                Cluster.getInstance().addCPU(cpu);
+            }
+            for (String typeS:typeList) {
+                GPU.Type type = GPU.Type.valueOf(typeS);
+                GPU gpu = new GPU(type);
+                Cluster.getInstance().addGPU(gpu);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            }
     }
 }
