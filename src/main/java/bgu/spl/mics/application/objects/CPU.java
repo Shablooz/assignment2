@@ -6,25 +6,40 @@ package bgu.spl.mics.application.objects;
  *  * Add fields and methods to this class as you see fit (including public methods and constructors).
  */
 public class CPU implements Comparable {
-    private boolean processing;
+    private boolean busy;
     private final int cores;
     public CPU(int cores){
         this.cores=cores;
     }
 
     public void ProcessBatch(){
-        DataBatch batch=Cluster.getInstance().getNextBatch(this);
+        DataBatch batch=Cluster.getInstance().ProcessBatch(this);
         batch.process();
         int prog=batch.toProcess(cores);
         if(prog==batch.getProcessTicks()){
             batch.finish();
-       //     Cluster.getInstance().getNextBatch(this, batch);
+            busy=false;
+            Cluster.getInstance().finishBatch(this);
         }
 
     }
+    public boolean ProcessNextBatch(){
+        DataBatch batch=Cluster.getInstance().getNextBatch(this);
+        if(batch==null)
+            return false;
+        batch.process();
+        busy=true;
+        int prog=batch.toProcess(cores); //batch may take a single tick to process
+        if(prog==batch.getProcessTicks()){
+            batch.finish();
+            busy=false;
+            Cluster.getInstance().finishBatch(this);
+        }
+        return true;
+    }
 
-    public boolean processing() {
-        return processing;
+    public boolean busy() {
+        return busy;
     }
 
     @Override

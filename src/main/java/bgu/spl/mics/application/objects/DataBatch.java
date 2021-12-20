@@ -11,14 +11,19 @@ public class DataBatch {
     private int ticks; //ticks to process
     private int processTicks;
     private boolean processed;
+    private int trainingTicks;
 
     public DataBatch(int size,int Ticks){
         size=size;
         this.ticks=Ticks;
         processed=false;
         processTicks=0;
+        trainingTicks=0;
     }
 
+    public int getSize() {
+        return size;
+    }
     public boolean isProcessed() {
         return processed;
     }
@@ -31,8 +36,15 @@ public class DataBatch {
     public int getProcessTicks() {
         return processTicks;
     }
+    //public int
     public void finish(){
         processed=true;
+    }
+    public int getTrainingTicks(){
+        return trainingTicks;
+    }
+    public void train(){
+        trainingTicks++;
     }
 
 }

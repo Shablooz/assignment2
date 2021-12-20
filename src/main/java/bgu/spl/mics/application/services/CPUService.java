@@ -5,7 +5,6 @@ import bgu.spl.mics.application.Messages.TickBroadcast;
 import bgu.spl.mics.application.objects.CPU;
 
 /**
- * CPU service is responsible for handling the {@link DataPreProcessEvent}.
  * This class may not hold references for objects which it is not responsible for.
  *
  * You can add private fields and public methods to this class.
@@ -23,8 +22,12 @@ public class CPUService extends MicroService {
     @Override
     protected void initialize() {
     subscribeBroadcast(TickBroadcast.class, (e)-> {
-        if(cpu.processing()){
+        if(cpu.busy()){
             cpu.ProcessBatch();
+        }
+        else if(cpu.ProcessNextBatch()){
+            //if there is a next batch, need to count tick and return true (after getting next batch)
+            //else return false and not count as a working tick
         }
     });
 

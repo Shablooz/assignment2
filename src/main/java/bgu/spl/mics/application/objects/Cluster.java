@@ -4,6 +4,7 @@ package bgu.spl.mics.application.objects;
 import bgu.spl.mics.MessageBusImpl;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.PriorityBlockingQueue;
 
 /**
@@ -18,9 +19,10 @@ public class Cluster {
 	private  ArrayList<GPU> GPUs;
 	private PriorityBlockingQueue<GPU> activeGPUs; //faster gpus come first
 	private PriorityBlockingQueue<CPU> CPUs;
-	//private HashMap<CPU,Deque<DataBatch>>() ;
-	private HashMap<GPU, Queue<DataBatch>> processedBatches;
-	private HashMap<GPU, Queue<DataBatch>> toProcessBatches;
+	private HashMap<GPU, Deque<DataBatch>> processedBatches;
+	private ConcurrentHashMap<CPU, DataBatch> toProcessBatches;
+	private HashMap<GPU,Integer> inProcessing;
+	private HashMap<CPU,GPU> batchProcessingAllocation;
 
 
 
@@ -31,25 +33,58 @@ public class Cluster {
 		GPUs=new ArrayList<>();
 		activeGPUs=new PriorityBlockingQueue<>();
 		CPUs=new PriorityBlockingQueue<>();
+		toProcessBatches=new ConcurrentHashMap<>();
 		processedBatches=new HashMap<>();
+		batchProcessingAllocation=new HashMap<>();
 	}
 	public static Cluster getInstance(){
 		return Cluster.InstanceHolder.instance;
 	}
-	public synchronized DataBatch ProcessBatch(GPU gpu, DataBatch dataBatch) {
-		boolean processed = false;
-		//while (!processed) {
-		//	for(CPU cpu: CPUs){
-		//	//	if()
-		//	}
-		//}
+	public DataBatch getProcessedBatch(GPU gpu){
+		ArrayDeque<DataBatch> a= (ArrayDeque<DataBatch>) processedBatches.get(gpu);
+		if(!a.isEmpty()){
+			return a.getFirst();
+		}
 		return null;
 	}
-	public DataBatch getNextBatch(CPU cpu) {
-		return null;
+	public synchronized DataBatch ProcessBatch(CPU cpu) {
+		return toProcessBatches.get(cpu);
+	}
+	public synchronized DataBatch getNextBatch(CPU cpu) {
+		DataBatch batch=null;
+		if(!activeGPUs.isEmpty()) {
+			GPU chosenGPU=null;
+			boolean foundGPU = false;
+			for (GPU gpu : activeGPUs) {
+				if ((gpu.getInProcessing() + inProcessing.get(gpu)) <= gpu.getVRAM()) {
+					chosenGPU=gpu;
+					foundGPU=true;
+					break;
+				}
+			}
+			if (!foundGPU) {
+				for (GPU gpu : activeGPUs) {
+					if (!gpu.isFull()) {
+						chosenGPU=gpu;
+						foundGPU=true;
+						break;
+					}
+				}
+				if (!foundGPU) {
+					chosenGPU=activeGPUs.peek(); //quickest gpu, if no more fitting gpu is found
+
+				}
+			}
+			assert chosenGPU != null;
+			batch=chosenGPU.getBatchToProcess();
+			toProcessBatches.put(cpu,batch);
+		}
+		return batch;
 	}
 	public void finishBatch(CPU cpu) {
-	//	batch Batch=
+		DataBatch batch=toProcessBatches.get(cpu);
+		GPU gpu=batchProcessingAllocation.get(cpu);
+			processedBatches.get(gpu).addLast(batch);
 	}
 
 	public void SetActiveGPU(GPU gpu){
@@ -63,5 +98,13 @@ public class Cluster {
 	}
 	public void addCPU(CPU cpu){
 		CPUs.add(cpu);
+	}
+	public void initialize(){
+		for(GPU gpu: GPUs){
+			inProcessing.put(gpu, 0);
+		}
+		for(CPU cpu: CPUs){
+	//		toProcessBatches.put(cpu,new ArrayDeque<>());
+		}
 	}
 }

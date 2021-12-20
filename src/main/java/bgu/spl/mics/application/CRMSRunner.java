@@ -93,13 +93,15 @@ public class CRMSRunner {
                 try{
                     waitForGPU.wait(); //wait for at least one gpu to finish subscribing, before sending models for training
                 }
-                catch (InterruptedException e){}
+                catch (InterruptedException ignored){}
             }
+
             for(Student student: students){
                 StudentService studentService=new StudentService(student.getName(),student);
                 Thread sThread=new Thread(studentService);
                 sThread.start();
             }
+            Cluster.getInstance().initialize();
             TimeService timeService=new TimeService(TickTime, Duration);
             Thread timeThread=new Thread(timeService);
             timeThread.start();
