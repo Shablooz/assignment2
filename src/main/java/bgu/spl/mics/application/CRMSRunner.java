@@ -1,6 +1,10 @@
 package bgu.spl.mics.application;
 
 import bgu.spl.mics.application.objects.*;
+import bgu.spl.mics.application.services.CPUService;
+import bgu.spl.mics.application.services.GPUService;
+import bgu.spl.mics.application.services.StudentService;
+import bgu.spl.mics.application.services.TimeService;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -27,9 +31,9 @@ public class CRMSRunner {
             JsonObject fileObject = fileElement.getAsJsonObject();
             Integer TickTime = fileObject.get("TickTime").getAsInt();
             Integer Duration = fileObject.get("Duration").getAsInt();
-
             JsonArray jsonArrayStudents = fileObject.get("Students").getAsJsonArray();
             List<Student> students = new ArrayList<>();
+
             for (JsonElement studentElement:jsonArrayStudents) {
                 JsonObject studentJsonObject = studentElement.getAsJsonObject();
                 String name = studentJsonObject.get("name").getAsString();
@@ -71,13 +75,34 @@ public class CRMSRunner {
             }
             for (Integer cores:coresList) {
                 CPU cpu = new CPU(cores);
+                CPUService cpuService=new CPUService(cores+"",cpu);
+                Thread cpuThread=new Thread(cpuService);
+                cpuThread.start();
                 Cluster.getInstance().addCPU(cpu);
             }
+            Object waitForGPU=new Object();
             for (String typeS:typeList) {
                 GPU.Type type = GPU.Type.valueOf(typeS);
                 GPU gpu = new GPU(type);
+                GPUService gpuService=new GPUService(type+"",gpu,waitForGPU);
+                Thread gpuThread=new Thread(gpuService);
+                gpuThread.start();
                 Cluster.getInstance().addGPU(gpu);
             }
+            synchronized (waitForGPU){
+                try{
+                    waitForGPU.wait(); //wait for at least one gpu to finish subscribing, before sending models for training
+                }
+                catch (InterruptedException e){}
+            }
+            for(Student student: students){
+                StudentService studentService=new StudentService(student.getName(),student);
+                Thread sThread=new Thread(studentService);
+                sThread.start();
+            }
+            TimeService timeService=new TimeService(TickTime, Duration);
+            Thread timeThread=new Thread(timeService);
+            timeThread.start();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             }

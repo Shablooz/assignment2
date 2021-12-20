@@ -1,6 +1,7 @@
 package bgu.spl.mics.application.services;
 
 import bgu.spl.mics.MicroService;
+import bgu.spl.mics.application.Messages.TickBroadcast;
 import bgu.spl.mics.application.objects.CPU;
 
 /**
@@ -11,6 +12,7 @@ import bgu.spl.mics.application.objects.CPU;
  * You MAY change constructor signatures and even add new public constructors.
  */
 public class CPUService extends MicroService {
+    private boolean processing;
     int timeUsed;
     CPU cpu;
     public CPUService(String name,CPU cpu) {
@@ -20,7 +22,11 @@ public class CPUService extends MicroService {
 
     @Override
     protected void initialize() {
-
+    subscribeBroadcast(TickBroadcast.class, (e)-> {
+        if(cpu.processing()){
+            cpu.ProcessBatch();
+        }
+    });
 
     }
 }

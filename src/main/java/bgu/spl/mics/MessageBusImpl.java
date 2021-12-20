@@ -1,6 +1,7 @@
 package bgu.spl.mics;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The {@link MessageBusImpl class is the implementation of the MessageBus interface.
@@ -9,19 +10,19 @@ import java.util.*;
  */
 public class MessageBusImpl implements MessageBus {
 
-	private final HashMap<MicroService, Queue<Message>> registeredServices;
-	private final HashMap<Class<? extends Event>,Queue<MicroService>> SubscribedMircoServiceEvent;
-	private final HashMap<Class<? extends Broadcast>,Queue<MicroService>> SubscribedMircoServiceBroadCasts;
-	private final HashMap<Class<? extends Event>,Future> ActiveFutures;
+	private final ConcurrentHashMap<MicroService, Deque<Message>> registeredServices;
+	private final ConcurrentHashMap<Class<? extends Message>,Deque<MicroService>> SubscribedMircoServiceEvent;
+	private final ConcurrentHashMap<Class<? extends Broadcast>,Deque<MicroService>> SubscribedMircoServiceBroadCasts;
+	private final ConcurrentHashMap<Class<? extends Message>,Future> ActiveFutures;
 
 	private  static  final class InstanceHolder {
 		static final MessageBusImpl instance = new MessageBusImpl();
 	}
 	private MessageBusImpl(){
-		registeredServices=new HashMap<>();
-		SubscribedMircoServiceBroadCasts=new HashMap<>();
-		SubscribedMircoServiceEvent=new HashMap<>();
-		ActiveFutures=new HashMap<>();
+		registeredServices=new ConcurrentHashMap<>();
+		SubscribedMircoServiceBroadCasts=new ConcurrentHashMap<>();
+		SubscribedMircoServiceEvent=new ConcurrentHashMap<>();
+		ActiveFutures=new ConcurrentHashMap<>();
 
 	}
 	public static MessageBusImpl getInstence(){
@@ -65,31 +66,39 @@ public class MessageBusImpl implements MessageBus {
 
 	@Override
 	public void sendBroadcast(Broadcast b) {
-		Queue<MicroService> subbed=SubscribedMircoServiceBroadCasts.get(b);
-		for(MicroService service : subbed){
-			registeredServices.get(service).add(b);
-			service.notify();
-		}
+		Queue<MicroService> subbed=SubscribedMircoServiceBroadCasts.get(b.getClass());
+		if(subbed!=null)
+			for(MicroService service : subbed) {
+				synchronized (service) {
+					registeredServices.get(service).add(b);
+					service.notify();
+				}
+			}
 	}
+
 
 
 	@Override
 	public <T> Future<T> sendEvent(Event<T> e) {
-		Queue<MicroService> subbed=SubscribedMircoServiceEvent.get(e);
-		if(subbed==null || subbed.isEmpty())
-			return null;
-		Future<T> future=new Future<T>();
-		ActiveFutures.put(e.getClass(),future);
-		MicroService m=subbed.poll();
-		subbed.add(m);
-		registeredServices.get(m).add(e);
-		m.notify();
-		return future;
-	}
+			Queue<MicroService> subbed = SubscribedMircoServiceEvent.get(e.getClass());
+			if (subbed == null || subbed.isEmpty())
+				return null;
+				Future<T> future = new Future<T>();
+				ActiveFutures.put(e.getClass(), future);
+				MicroService m = subbed.poll();
+				subbed.add(m);
+			synchronized (m) {
+				registeredServices.get(m).add(e);
+				m.notifyAll();
+			}
+			return future;
+		}
+
+
 
 	@Override
 	public void register(MicroService m) {
-		registeredServices.put(m,new PriorityQueue<>());
+		registeredServices.put(m,new ArrayDeque<>());
 
 	}
 
@@ -103,7 +112,7 @@ public class MessageBusImpl implements MessageBus {
 		if(!registeredServices.containsKey(m)){
 			throw new IllegalStateException("MicroService Not Registered");
 		}
-		while(registeredServices.get(m).isEmpty()){
+		if(registeredServices.get(m).isEmpty()){
 			synchronized (m) {
 				m.wait();
 			}

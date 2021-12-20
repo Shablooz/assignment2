@@ -26,9 +26,13 @@ public class StudentService extends MicroService {
     protected void initialize() {
         subscribeBroadcast(PublishConferenceBroadcast.class,broadcast -> {});
         for(Model model : student.getModels()) {
-            Future<TrainModelEvent> future =(Future<TrainModelEvent>) sendEvent(new TrainModelEvent(model));
-            if(future!=null)
-               future.get();
+            Future<Model> future =(Future<Model>) sendEvent(new TrainModelEvent(model));
+                if (future != null)
+                    synchronized (future){
+                    Model e=future.get();
+            }
+                Future<TestModelEvent> testModelEventFuture=(Future<TestModelEvent>) sendEvent(new TestModelEvent(model));
+                future.get();
         }
 
     }

@@ -1,16 +1,15 @@
 package bgu.spl.mics.application.services;
 
+import bgu.spl.mics.Event;
 import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.Messages.*;
 import bgu.spl.mics.application.objects.*;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 
 /**
  * GPU service is responsible for handling the
  * {@link TrainModelEvent} and {@link TestModelEvent},
- * in addition to sending the {@link DataPreProcessEvent}.
  * This class may not hold references for objects which it is not responsible for.
  *
  * You can add private fields and public methods to this class.
@@ -18,21 +17,42 @@ import java.util.ArrayList;
  */
 public class GPUService extends MicroService {
 
-    GPU gpu;
+    private GPU gpu;
+    private Object waitGPU;
     private ArrayDeque<TrainModelEvent> toProcess;
-    public GPUService(String name,GPU gpu) {
+    public GPUService(String name,GPU gpu,Object waitObj) {
         super(name);
+        this.waitGPU=waitObj;
         this.gpu=gpu;
+        toProcess=new ArrayDeque<>();
     }
 
     @Override
     protected void initialize() {
         subscribeBroadcast(TickBroadcast.class,(tick)->{
-            gpu.sendSample(toProcess.getFirst());
+            if(!toProcess.isEmpty()) {
+                TrainModelEvent e=toProcess.peekFirst();
+                gpu.sendSample(e);
+                if(e.done()){
+                    complete(e,e.getModel());
+                    toProcess.removeFirst();
+                    if(toProcess.isEmpty())
+                        gpu.deactivate();
+                }
+            }
+
+
+
         });
         subscribeEvent(TrainModelEvent.class,model -> {
             toProcess.addLast(model);
+            if(toProcess.isEmpty())
+                gpu.activate();
         });
+        synchronized (waitGPU) {
+            waitGPU.notifyAll();
+        }
+
     }
 
 }

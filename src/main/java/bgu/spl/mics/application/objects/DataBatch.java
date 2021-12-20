@@ -9,21 +9,14 @@ public class DataBatch {
 
     private int size;
     private int ticks; //ticks to process
+    private int processTicks;
     private boolean processed;
 
     public DataBatch(int size,int Ticks){
         size=size;
         this.ticks=Ticks;
         processed=false;
-    }
-    public void Process(int cores){
-        try {
-            wait((32 / cores) * ticks);
-        }
-        catch (InterruptedException e){
-
-        }
-        processed=true;
+        processTicks=0;
     }
 
     public boolean isProcessed() {
@@ -32,4 +25,14 @@ public class DataBatch {
     public int toProcess(int cores){
         return (32/cores)*ticks;
     }
+    public void process(){
+        processTicks++;
+    }
+    public int getProcessTicks() {
+        return processTicks;
+    }
+    public void finish(){
+        processed=true;
+    }
+
 }

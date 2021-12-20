@@ -28,9 +28,9 @@ public class Data {
         UnprocessedBatches=new ArrayDeque<>();
         ProcessedBatches=new ArrayList();
         switch (type){
-            case Text:ticks=2;
-            case Images:ticks=4;
-            case Tabular:ticks=1;
+            case Text:ticks=2; break;
+            case Images:ticks=4; break;
+            case Tabular:ticks=1; break;
 
         }
         this.type=type;

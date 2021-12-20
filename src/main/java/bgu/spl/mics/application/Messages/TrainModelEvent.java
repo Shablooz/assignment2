@@ -20,4 +20,7 @@ public class TrainModelEvent implements Event {
     public Model getModel() {
         return model;
     }
+    public boolean done(){
+        return model.getProcessingStatus();
+    }
 }

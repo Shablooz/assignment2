@@ -31,5 +31,4 @@ public class TimeService extends MicroService{
 		for(int i=0;i<duration/speed;i++)
 			sendBroadcast(new TickBroadcast());
 	}
-
 }

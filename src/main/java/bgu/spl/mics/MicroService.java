@@ -25,7 +25,7 @@ import java.util.Queue;
 
 public abstract class MicroService implements Runnable {
 
-    private HashMap<Class<? extends Message>,Callback> subscribedEvents;
+    private HashMap<Class<? extends Message>,Callback> subscribedMessages;
     private boolean terminated = false;
     private final String name;
  //   private static MessageBusImpl messageBus;
@@ -36,7 +36,7 @@ public abstract class MicroService implements Runnable {
      */
     public MicroService(String name) {
         this.name = name;
-        subscribedEvents=new HashMap<>();
+        subscribedMessages=new HashMap<>();
     }
 
     /**
@@ -61,7 +61,8 @@ public abstract class MicroService implements Runnable {
      *                 queue.
      */
     protected final <T, E extends Event<T>> void subscribeEvent(Class<E> type, Callback<E> callback) {
-        subscribedEvents.put(type,callback);
+            MessageBusImpl.getInstence().subscribeEvent(type,this);
+        subscribedMessages.put(type, callback);
     }
 
     /**
@@ -85,6 +86,8 @@ public abstract class MicroService implements Runnable {
      *                 queue.
      */
     protected final <B extends Broadcast> void subscribeBroadcast(Class<B> type, Callback<B> callback) {
+        MessageBusImpl.getInstence().subscribeBroadcast(type,this);
+        subscribedMessages.put(type, callback);
 
     }
 
@@ -103,7 +106,6 @@ public abstract class MicroService implements Runnable {
     protected final <T> Future<T> sendEvent(Event<T> e) {
         return MessageBusImpl.getInstence().sendEvent(e);
     }
-
     /**
      * A Micro-Service calls this method in order to send the broadcast message {@code b} using the message-bus
      * to all the services subscribed to it.
@@ -161,10 +163,12 @@ public abstract class MicroService implements Runnable {
             Message message = null;
             try {
                 message=MessageBusImpl.getInstence().awaitMessage(this);
+                subscribedMessages.get(message.getClass()).call(message);
             }
             catch (InterruptedException e){
-                subscribedEvents.get(message.getClass()).call(message);
+                subscribedMessages.get(message.getClass()).call(message);
             }
+
         }
     }
 
