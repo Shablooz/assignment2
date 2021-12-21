@@ -1,7 +1,6 @@
 package bgu.spl.mics.application.services;
 
 import bgu.spl.mics.MicroService;
-import bgu.spl.mics.application.Messages.GetCPUTimeUsedEvent;
 import bgu.spl.mics.application.Messages.TickBroadcast;
 import bgu.spl.mics.application.objects.CPU;
 
@@ -13,29 +12,24 @@ import bgu.spl.mics.application.objects.CPU;
  */
 public class CPUService extends MicroService {
     private boolean processing;
-    int timeUsed;
-    int processedBatches;
     CPU cpu;
-    public CPUService(String name,CPU cpu) {
+
+    public CPUService(String name, CPU cpu) {
         super(name);
-        this.cpu=cpu;
+        this.cpu = cpu;
     }
 
     @Override
     protected void initialize() {
-    subscribeBroadcast(TickBroadcast.class, (e)-> {
-        if(cpu.busy()){
-            cpu.ProcessBatch();
-            timeUsed++;
-        }
-        else if(cpu.ProcessNextBatch()){
-            timeUsed++;
-            processedBatches++;
-        }
+        subscribeBroadcast(TickBroadcast.class, (e) -> {
+            if (cpu.busy()) {
+                cpu.ProcessBatch();
+                cpu.tick();
+            } else if (cpu.ProcessNextBatch()) {
+                cpu.tick();
+                cpu.processBatch();
+            }
 
-    });
-    subscribeEvent(GetCPUTimeUsedEvent.class, (e)->{
-        complete(e,timeUsed);
-    });
+        });
     }
 }

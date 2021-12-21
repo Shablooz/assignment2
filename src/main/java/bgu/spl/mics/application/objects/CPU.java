@@ -8,10 +8,27 @@ package bgu.spl.mics.application.objects;
 public class CPU implements Comparable {
     private boolean busy;
     private final int cores;
+    private int timeUsed;
+    private int batchesProcessed;
     public CPU(int cores){
         this.cores=cores;
+        timeUsed=0;
+        batchesProcessed=0;
     }
 
+    public int getTimeUsed() {
+        return timeUsed;
+    }
+
+    public int getBatchesProcessed() {
+        return batchesProcessed;
+    }
+    public void tick(){
+        timeUsed++;
+    }
+    public void processBatch(){
+        batchesProcessed++;
+    }
     public void ProcessBatch(){
         DataBatch batch=Cluster.getInstance().ProcessBatch(this);
         batch.process();

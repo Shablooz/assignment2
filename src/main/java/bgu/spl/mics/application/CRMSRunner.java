@@ -1,5 +1,6 @@
 package bgu.spl.mics.application;
 
+import bgu.spl.mics.Future;
 import bgu.spl.mics.application.objects.*;
 import bgu.spl.mics.application.services.*;
 import com.google.gson.JsonArray;
@@ -70,17 +71,21 @@ public class CRMSRunner {
             for(JsonElement gpuElement: gpusJson){
                 typeList.add(gpuElement.getAsString());
             }
+            ArrayList<CPU> cpus=new ArrayList<>();
             for (Integer cores:coresList) {
                 CPU cpu = new CPU(cores);
+                cpus.add(cpu);
                 CPUService cpuService=new CPUService(cores+"",cpu);
                 Thread cpuThread=new Thread(cpuService);
                 cpuThread.start();
                 Cluster.getInstance().addCPU(cpu);
             }
+            ArrayList<GPU> gpus=new ArrayList<>();
             Object waitForGPU=new Object();
             for (String typeS:typeList) {
                 GPU.Type type = GPU.Type.valueOf(typeS);
                 GPU gpu = new GPU(type);
+                gpus.add(gpu);
                 GPUService gpuService=new GPUService(type+"",gpu,waitForGPU);
                 Thread gpuThread=new Thread(gpuService);
                 gpuThread.start();
@@ -114,8 +119,8 @@ public class CRMSRunner {
                 StringBuilder studentDetails = new StringBuilder("{\nName: " + student.getName() + "\n");
                 studentDetails.append("Department: ").append(student.getDepartment()).append("\n");
                 studentDetails.append("Status: ").append(student.getDegree()).append("\n");
-                studentDetails.append("Publications: ").append(student.getDepartment()).append("\n");//TODO: publications
-                studentDetails.append("Paper Read: ").append(student.getPapersRead()).append("\n");//TODO: paper read
+                studentDetails.append("Publications: ").append(student.getPublications()).append("\n");
+                studentDetails.append("Paper Read: ").append(student.getPapersRead()).append("\n");
                 studentDetails.append("Train Models:\n");
                 for (Model model:student.getModels()){
                     if (model.getStatus() == Model.Status.Trained || model.getStatus() == Model.Status.Tested){
@@ -124,7 +129,7 @@ public class CRMSRunner {
                         studentDetails.append("Type: ").append(model.getData().getType()).append("\n");
                         studentDetails.append("Size: ").append(model.getData().getSize()).append("\n");
                         studentDetails.append("Status: ").append(model.getStatus()).append("\n");
-                        studentDetails.append("Result: ").append(model.getName()).append("\n}\n");//TODO: result
+                        studentDetails.append("Result: ").append(model.getResult()).append("\n}\n");
                     }
                 }
                 studentDetails.append("\n}\n");
@@ -142,14 +147,21 @@ public class CRMSRunner {
                     conferenceDetails.append("Type: ").append(model.getData().getType()).append("\n");
                     conferenceDetails.append("Size: ").append(model.getData().getSize()).append("\n");
                     conferenceDetails.append("Status: ").append(model.getStatus()).append("\n");
-                    conferenceDetails.append("Result: ").append(model.getName()).append("\n}\n");//TODO: result
+                    conferenceDetails.append("Result: ").append(model.getResult()).append("\n}\n");
                 }
                 conferenceDetails.append("\n}\n");
                 OutputS.append(conferenceDetails).append("\n");
             }
-            OutputS.append("cpuTimeUsed: ").append("\n");//TODO: cpu time used
-            OutputS.append("gpuTimeUsed: ").append("\n");//TODO: gpu time used
-            OutputS.append("batchesProcessed: ").append("\n");//TODO: batched processed
+            int gpuTime=0,cpuTime=0,cpuBatches=0;
+            for(GPU gpu:gpus)
+                gpuTime+=gpu.getTicks();
+            for(CPU cpu:cpus){
+                cpuTime+=cpu.getTimeUsed();
+                cpuBatches+=cpu.getBatchesProcessed();
+            }
+            OutputS.append("cpuTimeUsed: ").append(cpuTime).append("\n");
+            OutputS.append("gpuTimeUsed: ").append(gpuTime).append("\n");
+            OutputS.append("batchesProcessed: ").append(cpuBatches).append("\n");
             File Output = new File("Output.txt");
             FileWriter myWriter = new FileWriter("Output.txt");
             myWriter.write(String.valueOf(OutputS));

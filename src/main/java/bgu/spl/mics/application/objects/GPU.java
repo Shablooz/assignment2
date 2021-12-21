@@ -28,6 +28,7 @@ public class GPU implements Comparable {
     private final ArrayList<DataBatch> training;
     private boolean active;
     private boolean noUnprocessedLeft;
+    private int ticks;
 
     public GPU(Type type){
         if(type==Type.RTX3090) {
@@ -45,6 +46,7 @@ public class GPU implements Comparable {
         this.type=type;
         inProcessing=0;
         training=new ArrayList<>(VRAM);
+        ticks=0;
     }
    // public void sendSample(TrainModelEvent modelEvent) {
    //     DataBatch batch=modelEvent.getModel().getNextBatch();
@@ -53,6 +55,9 @@ public class GPU implements Comparable {
    // }
     public int getVRAM(){
         return VRAM;
+    }
+    public int getTicks(){
+        return ticks;
     }
     public void activate() {
         Cluster.getInstance().SetActiveGPU(this);
@@ -75,6 +80,7 @@ public class GPU implements Comparable {
         noUnprocessedLeft=false;
     }
     public void OnTick(){
+        ticks++;
         DataBatch batch;
         Iterator<DataBatch> iterator=training.iterator();
         while(iterator.hasNext()) {   //process batches and get rid of them if done

@@ -43,7 +43,7 @@ public class Cluster {
 	public synchronized DataBatch getProcessedBatch(GPU gpu){
 		ArrayDeque<DataBatch> a= (ArrayDeque<DataBatch>) processedBatches.get(gpu);
 		if(!a.isEmpty()){
-			return a.removeFirst();
+			return a.remove();
 		}
 		return null;
 	}
@@ -64,43 +64,44 @@ public class Cluster {
 					}
 				}
 				if (!foundGPU) {
-					for (GPU gpu : activeGPUs) {
-						if (!gpu.isFull() && !gpu.getNoUnprocessedLeft()) {
-							chosenGPU = gpu;
-							foundGPU = true;
-							break;
-						}
-					}
+					for (GPU gpu : activeGPUs)
+						if (!gpu.getNoUnprocessedLeft())
+							chosenGPU = gpu; //quickest gpu, if no more fitting gpu is found
 				}
-			if (!foundGPU) {
-				for (GPU gpu : activeGPUs)
-					if(!gpu.getNoUnprocessedLeft())
-						chosenGPU = gpu; //quickest gpu, if no more fitting gpu is found
-			}
-			if(foundGPU) {
-				inProcessing.merge(chosenGPU, 1, Integer::sum); //if there is no value, it becomes 1, else it grows by one
-				assert chosenGPU != null;
-				batch = chosenGPU.getBatchToProcess();
+				if (foundGPU) {
 
-				toProcessBatches.put(cpu, batch);
-				batchProcessingAllocation.put(cpu, chosenGPU);
+
+					inProcessing.merge(chosenGPU, 1, Integer::sum); //if there is no value, it becomes 1, else it grows by one
+					assert chosenGPU != null;
+					batch = chosenGPU.getBatchToProcess();
+
+					toProcessBatches.put(cpu, batch);
+					batchProcessingAllocation.put(cpu, chosenGPU);
+				}
 			}
-			}
+
 			return batch;
 		}
+
 	}
 	public void finishBatch(CPU cpu) {
-		DataBatch batch=toProcessBatches.get(cpu);
-		GPU gpu=batchProcessingAllocation.get(cpu);
-			processedBatches.get(gpu).addLast(batch);
-			inProcessing.merge(gpu,-1,Integer::sum);
+		synchronized (activeGPUs){
+		DataBatch batch = toProcessBatches.get(cpu);
+		GPU gpu = batchProcessingAllocation.get(cpu);
+		processedBatches.get(gpu).addLast(batch);
+		inProcessing.merge(gpu, -1, Integer::sum);
+	}
 	}
 
 	public void SetActiveGPU(GPU gpu){
+	synchronized (activeGPUs) {
 		activeGPUs.add(gpu);
 	}
+	}
 	public void SetInactiveGPU(GPU gpu){
+	synchronized (activeGPUs) {
 		activeGPUs.remove(gpu);
+	}
 	}
 	public void addGPU(GPU gpu){
 		GPUs.add(gpu);

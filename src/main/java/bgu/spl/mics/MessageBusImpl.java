@@ -70,7 +70,7 @@ public class MessageBusImpl implements MessageBus {
 			for(MicroService service : subbed) {
 				synchronized (service) {
 					registeredServices.get(service).add(b);
-					service.notify();
+					service.notifyAll();
 				}
 			}
 	}

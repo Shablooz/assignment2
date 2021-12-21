@@ -80,6 +80,11 @@ public class Model {
     public void fail(){
         result=results.Bad;
     }
+
+    public results getResult() {
+        return result;
+    }
+
     public void addProcessedBatch(DataBatch batch){
         data.addProcessed(batch);
     }

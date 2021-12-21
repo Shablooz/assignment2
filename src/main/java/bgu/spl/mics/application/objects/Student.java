@@ -29,7 +29,6 @@ public class Student {
         publications=0;
         papersRead=0;
         models=new ArrayDeque<>();
-        //  this.models=models;
     }
     public Degree getDegree() {
         return status;
