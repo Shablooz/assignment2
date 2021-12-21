@@ -28,17 +28,19 @@ public class Data {
         UnprocessedBatches=new ArrayDeque<>();
         ProcessedBatches=new ArrayList();
         switch (type){
-            case Text:ticks=2;
-            case Images:ticks=4;
-            case Tabular:ticks=1;
+            case Text:ticks=2; break;
+            case Images:ticks=4; break;
+            case Tabular:ticks=1; break;
 
         }
         this.type=type;
         this.size=size;
+        processed=0;
         for(int i=0;i<size/1000;i++)
             UnprocessedBatches.addFirst(new DataBatch(1000,ticks));
         if(ticks%1000!=0)
             UnprocessedBatches.addFirst(new DataBatch(size%1000,ticks)); //left over batch of size <=1000
+
     }
 
     public int getSize() {
@@ -65,6 +67,10 @@ public class Data {
     }
     public void addProcessed(DataBatch batch){
         ProcessedBatches.add(batch);
+        processed+=batch.getSize();
+    }
+    public boolean processed(){
+        return processed==size;
     }
 
 }

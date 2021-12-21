@@ -25,10 +25,10 @@ import java.util.Queue;
 
 public abstract class MicroService implements Runnable {
 
-    private HashMap<Class<? extends Message>,Callback> subscribedEvents;
+    private HashMap<Class<? extends Message>,Callback> subscribedMessages;
     private boolean terminated = false;
     private final String name;
-    private static MessageBusImpl messageBus;
+ //   private static MessageBusImpl messageBus;
 
     /**
      * @param name the micro-service name (used mainly for debugging purposes -
@@ -36,6 +36,7 @@ public abstract class MicroService implements Runnable {
      */
     public MicroService(String name) {
         this.name = name;
+        subscribedMessages=new HashMap<>();
     }
 
     /**
@@ -60,7 +61,8 @@ public abstract class MicroService implements Runnable {
      *                 queue.
      */
     protected final <T, E extends Event<T>> void subscribeEvent(Class<E> type, Callback<E> callback) {
-        subscribedEvents.put(type,callback);
+            MessageBusImpl.getInstence().subscribeEvent(type,this);
+        subscribedMessages.put(type, callback);
     }
 
     /**
@@ -84,6 +86,8 @@ public abstract class MicroService implements Runnable {
      *                 queue.
      */
     protected final <B extends Broadcast> void subscribeBroadcast(Class<B> type, Callback<B> callback) {
+        MessageBusImpl.getInstence().subscribeBroadcast(type,this);
+        subscribedMessages.put(type, callback);
 
     }
 
@@ -100,9 +104,8 @@ public abstract class MicroService implements Runnable {
      * 	       			null in case no micro-service has subscribed to {@code e.getClass()}.
      */
     protected final <T> Future<T> sendEvent(Event<T> e) {
-        return messageBus.getInstence().sendEvent(e);
+        return MessageBusImpl.getInstence().sendEvent(e);
     }
-
     /**
      * A Micro-Service calls this method in order to send the broadcast message {@code b} using the message-bus
      * to all the services subscribed to it.
@@ -110,7 +113,7 @@ public abstract class MicroService implements Runnable {
      * @param b The broadcast message to send
      */
     protected final void sendBroadcast(Broadcast b) {
-        messageBus.getInstence().sendBroadcast(b);
+        MessageBusImpl.getInstence().sendBroadcast(b);
     }
 
     /**
@@ -124,7 +127,7 @@ public abstract class MicroService implements Runnable {
      *               {@code e}.
      */
     protected final <T> void complete(Event<T> e, T result) {
-        messageBus.getInstence().complete(e,result);
+        MessageBusImpl.getInstence().complete(e,result);
     }
 
     /**
@@ -154,15 +157,18 @@ public abstract class MicroService implements Runnable {
      */
     @Override
     public final void run() {
+        MessageBusImpl.getInstence().register(this);
         initialize();
         while (!terminated) {
             Message message = null;
             try {
-                message=messageBus.getInstence().awaitMessage(this);
+                message=MessageBusImpl.getInstence().awaitMessage(this);
+                subscribedMessages.get(message.getClass()).call(message);
             }
             catch (InterruptedException e){
-                subscribedEvents.get(message.getClass()).call(message);
+                subscribedMessages.get(message.getClass()).call(message);
             }
+
         }
     }
 

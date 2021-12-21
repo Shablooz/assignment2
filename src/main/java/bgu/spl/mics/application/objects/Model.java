@@ -11,6 +11,7 @@ public class Model {
     private Status status;
     private final Student student;
     private final String name;
+    private boolean trained=false;
     private boolean processed=false;
     private boolean published;
 
@@ -38,7 +39,7 @@ public class Model {
         return student;
     }
     public boolean getProcessingStatus(){
-        return processed;
+        return data.processed();
     }
     public Status getStatus() {
         return status;
@@ -51,7 +52,7 @@ public class Model {
     public void FinishTraining(){
         if(status==Status.Training)
             status=Status.Trained;
-            processed=true;
+        trained=true;
     }
     public void TestModel(){
         if(status==Status.Trained)

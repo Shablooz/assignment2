@@ -1,5 +1,6 @@
 package bgu.spl.mics.application.services;
 
+import bgu.spl.mics.MessageBusImpl;
 import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.Messages.TickBroadcast;
 
@@ -30,5 +31,4 @@ public class TimeService extends MicroService{
 		for(int i=0;i<duration/speed;i++)
 			sendBroadcast(new TickBroadcast());
 	}
-
 }
