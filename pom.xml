@@ -27,7 +27,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.company.App</mainClass>
+                            <mainClass>bgu.spl.mics.application.CRMSRunner</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

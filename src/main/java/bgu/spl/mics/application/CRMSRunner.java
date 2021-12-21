@@ -8,9 +8,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.jmx.remote.internal.ArrayQueue;
 import jdk.internal.org.objectweb.asm.Type;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -23,14 +22,15 @@ public class CRMSRunner {
     public static void main(String[] args) {
         Set<Thread> threadSet=Thread.getAllStackTraces().keySet(); //debug
         File input = new File("example_input.json");
+        //File input = new File(args[0]); /* FINAL TOUCH */
         try {
             JsonElement fileElement = JsonParser.parseReader(new FileReader(input));
             JsonObject fileObject = fileElement.getAsJsonObject();
             Integer TickTime = fileObject.get("TickTime").getAsInt();
             Integer Duration = fileObject.get("Duration").getAsInt();
+
             JsonArray jsonArrayStudents = fileObject.get("Students").getAsJsonArray();
             List<Student> students = new ArrayList<>();
-
             for (JsonElement studentElement:jsonArrayStudents) {
                 JsonObject studentJsonObject = studentElement.getAsJsonObject();
                 String name = studentJsonObject.get("name").getAsString();
@@ -106,8 +106,59 @@ public class CRMSRunner {
             TimeService timeService=new TimeService(TickTime, Duration);
             Thread timeThread=new Thread(timeService);
             timeThread.start();
+
+            //OUTPUT
+            StringBuilder OutputS = new StringBuilder();
+            OutputS.append("Students:\n");
+            for(Student student:students){
+                StringBuilder studentDetails = new StringBuilder("{\nName: " + student.getName() + "\n");
+                studentDetails.append("Department: ").append(student.getDepartment()).append("\n");
+                studentDetails.append("Status: ").append(student.getDegree()).append("\n");
+                studentDetails.append("Publications: ").append(student.getDepartment()).append("\n");//TODO: publications
+                studentDetails.append("Paper Read: ").append(student.getPapersRead()).append("\n");//TODO: paper read
+                studentDetails.append("Train Models:\n");
+                for (Model model:student.getModels()){
+                    if (model.getStatus() == Model.Status.Trained || model.getStatus() == Model.Status.Tested){
+                        studentDetails.append("{\nModel Name: ").append(model.getName()).append("\n");
+                        studentDetails.append("Data:{\n");
+                        studentDetails.append("Type: ").append(model.getData().getType()).append("\n");
+                        studentDetails.append("Size: ").append(model.getData().getSize()).append("\n");
+                        studentDetails.append("Status: ").append(model.getStatus()).append("\n");
+                        studentDetails.append("Result: ").append(model.getName()).append("\n}\n");//TODO: result
+                    }
+                }
+                studentDetails.append("\n}\n");
+                OutputS.append(studentDetails);
+            }
+            OutputS.append("Conferences:\n");
+            for (ConfrenceInformation conference: conferences){
+                StringBuilder conferenceDetails = new StringBuilder("{\n");
+                conferenceDetails.append("Name: ").append(conference.getName()).append("\n");
+                conferenceDetails.append("Date: ").append(conference.getDate()).append("\n");
+                conferenceDetails.append("Train Models:\n");
+                for (Model model:conference.getModelsPublished()){
+                    conferenceDetails.append("{\nModel Name: ").append(model.getName()).append("\n");
+                    conferenceDetails.append("Data:{\n");
+                    conferenceDetails.append("Type: ").append(model.getData().getType()).append("\n");
+                    conferenceDetails.append("Size: ").append(model.getData().getSize()).append("\n");
+                    conferenceDetails.append("Status: ").append(model.getStatus()).append("\n");
+                    conferenceDetails.append("Result: ").append(model.getName()).append("\n}\n");//TODO: result
+                }
+                conferenceDetails.append("\n}\n");
+                OutputS.append(conferenceDetails).append("\n");
+            }
+            OutputS.append("cpuTimeUsed: ").append("\n");//TODO: cpu time used
+            OutputS.append("gpuTimeUsed: ").append("\n");//TODO: gpu time used
+            OutputS.append("batchesProcessed: ").append("\n");//TODO: batched processed
+            File Output = new File("Output.txt");
+            FileWriter myWriter = new FileWriter("Output.txt");
+            myWriter.write(String.valueOf(OutputS));
+            myWriter.close();
         } catch (FileNotFoundException e) {
+
+        } catch (IOException e) {
             e.printStackTrace();
             }
+
     }
 }
