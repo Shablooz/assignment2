@@ -42,7 +42,9 @@ public class Data {
             UnprocessedBatches.addFirst(new DataBatch(size%1000,ticks)); //left over batch of size <=1000
 
     }
-
+    public boolean UnprocessedIsEmpty(){
+        return UnprocessedBatches.isEmpty();
+    }
     public int getSize() {
         return size;
     }

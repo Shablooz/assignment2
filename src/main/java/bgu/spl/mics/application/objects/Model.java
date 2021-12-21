@@ -11,7 +11,7 @@ public class Model {
     private Status status;
     private final Student student;
     private final String name;
-
+    private boolean noUnprocessedLeft;
     enum Status {
         PreTrained, Training, Trained, Tested
     }
@@ -21,8 +21,13 @@ public class Model {
         this.data = data;
         this.student = student;
         status=Status.PreTrained;
+        noUnprocessedLeft=false;
     }
-
+    public Boolean Test(){
+        if(student.getDegree()== Student.Degree.PhD)
+            return Math.random()<=0.8; //80% chance to return true
+        else return Math.random()<=0.6;
+    }
     public Data getData() {
         return data;
     }
@@ -36,6 +41,9 @@ public class Model {
     }
     public boolean getProcessingStatus(){
         return data.processed();
+    }
+    public boolean noUnprocessedLeft(){
+        return noUnprocessedLeft;
     }
     public Status getStatus() {
         return status;
@@ -54,7 +62,10 @@ public class Model {
             status=Status.Tested;
     }
     public DataBatch getNextBatch(){
-        return data.getDataBatchToProcess();
+        DataBatch batch= data.getDataBatchToProcess();
+        if(data.UnprocessedIsEmpty())
+            noUnprocessedLeft=true;
+        return batch;
     }
     public void addProcessedBatch(DataBatch batch){
         data.addProcessed(batch);

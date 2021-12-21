@@ -13,7 +13,7 @@ public class MessageBusImpl implements MessageBus {
 	private final ConcurrentHashMap<MicroService, Deque<Message>> registeredServices;
 	private final ConcurrentHashMap<Class<? extends Message>,Deque<MicroService>> SubscribedMircoServiceEvent;
 	private final ConcurrentHashMap<Class<? extends Broadcast>,Deque<MicroService>> SubscribedMircoServiceBroadCasts;
-	private final ConcurrentHashMap<Class<? extends Message>,Future> ActiveFutures;
+	private final ConcurrentHashMap<Event,Future> ActiveFutures;
 
 	private  static  final class InstanceHolder {
 		static final MessageBusImpl instance = new MessageBusImpl();
@@ -84,7 +84,7 @@ public class MessageBusImpl implements MessageBus {
 			if (subbed == null || subbed.isEmpty())
 				return null;
 				Future<T> future = new Future<T>();
-				ActiveFutures.put(e.getClass(), future);
+				ActiveFutures.put(e, future);
 				MicroService m = subbed.poll();
 				subbed.add(m);
 			synchronized (m) {

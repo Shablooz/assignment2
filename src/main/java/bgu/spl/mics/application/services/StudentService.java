@@ -33,7 +33,7 @@ public class StudentService extends MicroService {
                     synchronized (future){
                     model=future.get();
                     model.FinishTraining();
-                    TrainModelEvent trainModelEvent=new TrainModelEvent(model);
+                    TestModelEvent testModelEvent=new TestModelEvent(model);
                     Future<Model> future1 =(Future<Model>) sendEvent(new TestModelEvent(model));
                     if(future1 !=null)
                         synchronized (future1) {

@@ -40,10 +40,10 @@ public class Cluster {
 	public static Cluster getInstance(){
 		return Cluster.InstanceHolder.instance;
 	}
-	public DataBatch getProcessedBatch(GPU gpu){
+	public synchronized DataBatch getProcessedBatch(GPU gpu){
 		ArrayDeque<DataBatch> a= (ArrayDeque<DataBatch>) processedBatches.get(gpu);
 		if(!a.isEmpty()){
-			return a.getFirst();
+			return a.removeFirst();
 		}
 		return null;
 	}
@@ -57,7 +57,7 @@ public class Cluster {
 				GPU chosenGPU = null;
 				boolean foundGPU = false;
 				for (GPU gpu : activeGPUs) {
-					if ((gpu.getInProcessing() + inProcessing.get(gpu)) <= gpu.getVRAM()) {
+					if ((gpu.getInProcessing() + inProcessing.get(gpu)) <= gpu.getVRAM() && !gpu.getNoUnprocessedLeft()) {
 						chosenGPU = gpu;
 						foundGPU = true;
 						break;
@@ -65,7 +65,7 @@ public class Cluster {
 				}
 				if (!foundGPU) {
 					for (GPU gpu : activeGPUs) {
-						if (!gpu.isFull()) {
+						if (!gpu.isFull() && !gpu.getNoUnprocessedLeft()) {
 							chosenGPU = gpu;
 							foundGPU = true;
 							break;
@@ -73,15 +73,18 @@ public class Cluster {
 					}
 				}
 			if (!foundGPU) {
-				chosenGPU = activeGPUs.peek(); //quickest gpu, if no more fitting gpu is found
+				for (GPU gpu : activeGPUs)
+					if(!gpu.getNoUnprocessedLeft())
+						chosenGPU = gpu; //quickest gpu, if no more fitting gpu is found
 			}
-				inProcessing.merge(chosenGPU,1,Integer::sum); //if there is no value, it becomes 1, else it grows by one
+			if(foundGPU) {
+				inProcessing.merge(chosenGPU, 1, Integer::sum); //if there is no value, it becomes 1, else it grows by one
 				assert chosenGPU != null;
 				batch = chosenGPU.getBatchToProcess();
-				if(batch==null)
-					chosenGPU.deactivate();
+
 				toProcessBatches.put(cpu, batch);
-				batchProcessingAllocation.put(cpu,chosenGPU);
+				batchProcessingAllocation.put(cpu, chosenGPU);
+			}
 			}
 			return batch;
 		}

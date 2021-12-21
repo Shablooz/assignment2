@@ -1,6 +1,7 @@
 package bgu.spl.mics.application.services;
 
 import bgu.spl.mics.MicroService;
+import bgu.spl.mics.application.Messages.GetCPUTimeUsedEvent;
 import bgu.spl.mics.application.Messages.TickBroadcast;
 import bgu.spl.mics.application.objects.CPU;
 
@@ -13,6 +14,7 @@ import bgu.spl.mics.application.objects.CPU;
 public class CPUService extends MicroService {
     private boolean processing;
     int timeUsed;
+    int processedBatches;
     CPU cpu;
     public CPUService(String name,CPU cpu) {
         super(name);
@@ -24,12 +26,16 @@ public class CPUService extends MicroService {
     subscribeBroadcast(TickBroadcast.class, (e)-> {
         if(cpu.busy()){
             cpu.ProcessBatch();
+            timeUsed++;
         }
         else if(cpu.ProcessNextBatch()){
-            //if there is a next batch, need to count tick and return true (after getting next batch)
-            //else return false and not count as a working tick
+            timeUsed++;
+            processedBatches++;
         }
-    });
 
+    });
+    subscribeEvent(GetCPUTimeUsedEvent.class, (e)->{
+        complete(e,timeUsed);
+    });
     }
 }

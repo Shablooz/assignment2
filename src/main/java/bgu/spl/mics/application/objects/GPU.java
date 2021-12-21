@@ -4,6 +4,7 @@ import bgu.spl.mics.application.Messages.TrainModelEvent;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 
 /**
  * Passive object representing a single GPU.
@@ -24,8 +25,9 @@ public class GPU implements Comparable {
     private int inProcessing;
     private final int VRAM;
     private final int trainingTicks;
-    private static ArrayList<DataBatch> training;
+    private final ArrayList<DataBatch> training;
     private boolean active;
+    private boolean noUnprocessedLeft;
 
     public GPU(Type type){
         if(type==Type.RTX3090) {
@@ -61,34 +63,46 @@ public class GPU implements Comparable {
         active=false;
     }
 
+    public boolean getNoUnprocessedLeft() {
+        return noUnprocessedLeft;
+    }
+
     public boolean isActive() {
         return active;
     }
     public void setModel(Model model){
         this.model=model;
+        noUnprocessedLeft=false;
     }
-    public void OnTick(){
-        for(DataBatch dataBatch: training) { //process batches and get rid of them if done
-            dataBatch.train();
-            if (dataBatch.getTrainingTicks() == trainingTicks) {
-                model.addProcessedBatch(dataBatch);
-                training.remove(dataBatch);
+    public  void OnTick(){
+        DataBatch batch;
+        Iterator<DataBatch> iterator=training.iterator();
+        while(iterator.hasNext()) {   //process batches and get rid of them if done
+            batch = iterator.next();
+            batch.train();
+            if (batch.getTrainingTicks() == trainingTicks) {
+                model.addProcessedBatch(batch);
+                iterator.remove();
                 inProcessing--;
             }
         }
         int spaces=VRAM-inProcessing;
         for(int i=0;i<spaces;i++){ //get new batches to process, if there are any done in cluster
-            DataBatch batch=Cluster.getInstance().getProcessedBatch(this);
-            if(batch==null)
+            DataBatch dataBatch=Cluster.getInstance().getProcessedBatch(this);
+            if(dataBatch==null)
                 break;
-            training.add(batch);
+            training.add(dataBatch);
             inProcessing++;
         }
     }
     @Override
     public int compareTo(Object o) {
         GPU gpu=(GPU)o;
-        return Integer.compare(VRAM,gpu.getVRAM());
+        if(inProcessing==0)
+            return -1;
+        else if(gpu.getInProcessing()==0)
+            return +1;
+        else return Integer.compare(gpu.getVRAM()/gpu.getInProcessing(),VRAM/inProcessing);
     }
     public boolean isFull(){
         return inProcessing<VRAM;
@@ -97,6 +111,10 @@ public class GPU implements Comparable {
         return inProcessing;
     }
     public DataBatch getBatchToProcess(){
-        return model.getNextBatch();
+        DataBatch batch= model.getNextBatch();
+        if(model.noUnprocessedLeft()) {
+            noUnprocessedLeft=true;
+        }
+        return batch;
     }
 }

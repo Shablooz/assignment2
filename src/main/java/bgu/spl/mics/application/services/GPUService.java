@@ -1,6 +1,7 @@
 package bgu.spl.mics.application.services;
 
 import bgu.spl.mics.Event;
+import bgu.spl.mics.Future;
 import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.Messages.*;
 import bgu.spl.mics.application.objects.*;
@@ -31,7 +32,7 @@ public class GPUService extends MicroService {
     protected void initialize() {
         subscribeBroadcast(TickBroadcast.class,(tick)->{
             if(!toProcess.isEmpty()) {
-                if(!gpu.isActive()) {
+                if(!gpu.isActive() && !gpu.getNoUnprocessedLeft()) {
                     gpu.setModel(toProcess.peekFirst().getModel());
                     gpu.activate();
                 }
@@ -50,8 +51,9 @@ public class GPUService extends MicroService {
         });
         subscribeEvent(TrainModelEvent.class,model -> {
             toProcess.addLast(model);
-            if(toProcess.isEmpty())
-                gpu.activate();
+        });
+        subscribeEvent(TestModelEvent.class,test -> {
+            complete(test,test.getModel().Test());
         });
         synchronized (waitGPU) {
             waitGPU.notifyAll();
