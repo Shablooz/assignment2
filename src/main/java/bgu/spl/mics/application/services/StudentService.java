@@ -26,7 +26,9 @@ public class StudentService extends MicroService {
     @Override
     protected void initialize() {
         subscribeBroadcast(PublishConferenceBroadcast.class,broadcast -> {
-            student.ReadPaper();
+            for(Model model:broadcast.getResults())
+                if(model.getStudent()!=student)
+                    student.ReadPaper();
         });
         for(Model model : student.getModels()) {
             model.StartTraining();

@@ -29,10 +29,10 @@ public class TimeService extends MicroService{
 
 	@Override
 	protected synchronized void initialize() {
-		for(int i=0;i<duration/speed;i++) {
+		for(int i=0;i<duration;i++) {
 			sendBroadcast(new TickBroadcast());
 			try {
-				wait(1);
+				wait(speed);
 			}
 			catch (InterruptedException ignore){}
 		}

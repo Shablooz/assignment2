@@ -1,10 +1,7 @@
 package bgu.spl.mics.application;
 
 import bgu.spl.mics.application.objects.*;
-import bgu.spl.mics.application.services.CPUService;
-import bgu.spl.mics.application.services.GPUService;
-import bgu.spl.mics.application.services.StudentService;
-import bgu.spl.mics.application.services.TimeService;
+import bgu.spl.mics.application.services.*;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -95,7 +92,11 @@ public class CRMSRunner {
                 }
                 catch (InterruptedException ignored){}
             }
-
+            for(ConfrenceInformation conference: conferences){
+                ConferenceService conferenceService=new ConferenceService(conference.getName(),conference);
+                Thread cThread=new Thread(conferenceService);
+                cThread.start();
+            }
             for(Student student: students){
                 StudentService studentService=new StudentService(student.getName(),student);
                 Thread sThread=new Thread(studentService);
