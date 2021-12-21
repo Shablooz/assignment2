@@ -5,6 +5,7 @@ import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.Messages.*;
 import bgu.spl.mics.application.objects.Model;
 import bgu.spl.mics.application.objects.Student;
+import com.sun.org.apache.xpath.internal.operations.Mod;
 
 /**
  * Student is responsible for sending the {@link TrainModelEvent},
@@ -24,15 +25,33 @@ public class StudentService extends MicroService {
 
     @Override
     protected void initialize() {
-        subscribeBroadcast(PublishConferenceBroadcast.class,broadcast -> {});
+        subscribeBroadcast(PublishConferenceBroadcast.class,broadcast -> {
+            student.ReadPaper();
+        });
         for(Model model : student.getModels()) {
-            Future<Model> future =(Future<Model>) sendEvent(new TrainModelEvent(model));
-                if (future != null)
-                    synchronized (future){
-                    Model e=future.get();
-            }
-                Future<TestModelEvent> testModelEventFuture=(Future<TestModelEvent>) sendEvent(new TestModelEvent(model));
-                future.get();
+            model.StartTraining();
+            Future<Model> trainFuture =(Future<Model>) sendEvent(new TrainModelEvent(model));
+                if (trainFuture != null)
+                    synchronized (trainFuture){
+                    model=trainFuture.get();
+                    System.out.println("Finished training a model");
+                    model.FinishTraining();
+                    Future<Boolean> testFuture =(Future<Boolean>) sendEvent(new TestModelEvent(model));
+                    if(testFuture !=null)
+                        synchronized (testFuture) {
+                            Boolean e=testFuture.get();
+                            model.FinishTesting();
+                            if(e){
+                                model.pass();
+                                student.PublishPaper();
+                                sendEvent(new PublishResultsEvent(model));
+                            }
+                            else model.fail();
+                        }
+                    }
+
+
+
         }
 
     }

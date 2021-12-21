@@ -32,4 +32,8 @@ public class ConfrenceInformation {
     public void publish(Model model){
         modelsPublished.add(model);
     }
+
+    public int getDate() {
+        return date;
+    }
 }

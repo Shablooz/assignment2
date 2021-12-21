@@ -5,6 +5,7 @@ import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.Messages.TickBroadcast;
 
 import java.util.Timer;
+import java.util.concurrent.TimeUnit;
 
 /**
  * TimeService is the global system timer There is only one instance of this micro-service.
@@ -27,8 +28,14 @@ public class TimeService extends MicroService{
 	}
 
 	@Override
-	protected void initialize() {
-		for(int i=0;i<duration/speed;i++)
+	protected synchronized void initialize() {
+		for(int i=0;i<duration/speed;i++) {
 			sendBroadcast(new TickBroadcast());
+			try {
+				wait(1);
+			}
+			catch (InterruptedException ignore){}
+		}
+
 	}
 }

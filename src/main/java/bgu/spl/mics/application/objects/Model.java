@@ -1,5 +1,7 @@
 package bgu.spl.mics.application.objects;
 
+import java.util.Base64;
+
 /**
  * Passive object representing a Deep Learning model.
  * Add all the fields described in the assignment as private fields.
@@ -11,12 +13,13 @@ public class Model {
     private Status status;
     private final Student student;
     private final String name;
-    private boolean trained=false;
-    private boolean processed=false;
-    private boolean published;
-
-    public enum Status {
+    private boolean noUnprocessedLeft;
+    private results result;
+    enum Status {
         PreTrained, Training, Trained, Tested
+    }
+    enum results{
+        None,Good,Bad
     }
 
     public Model(String name, Data data, Student student) {
@@ -24,9 +27,14 @@ public class Model {
         this.data = data;
         this.student = student;
         status=Status.PreTrained;
-        published = false;
+        noUnprocessedLeft=false;
+        result=results.None;
     }
-
+    public Boolean Test(){
+        if(student.getDegree()== Student.Degree.PhD)
+            return Math.random()<=0.8; //80% chance to return true
+        else return Math.random()<=0.6;
+    }
     public Data getData() {
         return data;
     }
@@ -41,6 +49,9 @@ public class Model {
     public boolean getProcessingStatus(){
         return data.processed();
     }
+    public boolean noUnprocessedLeft(){
+        return noUnprocessedLeft;
+    }
     public Status getStatus() {
         return status;
     }
@@ -52,22 +63,24 @@ public class Model {
     public void FinishTraining(){
         if(status==Status.Training)
             status=Status.Trained;
-        trained=true;
     }
-    public void TestModel(){
+    public void FinishTesting(){
         if(status==Status.Trained)
             status=Status.Tested;
     }
     public DataBatch getNextBatch(){
-        return data.getDataBatchToProcess();
+        DataBatch batch= data.getDataBatchToProcess();
+        if(data.UnprocessedIsEmpty())
+            noUnprocessedLeft=true;
+        return batch;
+    }
+    public void pass(){
+        result=results.Good;
+    }
+    public void fail(){
+        result=results.Bad;
     }
     public void addProcessedBatch(DataBatch batch){
         data.addProcessed(batch);
-    }
-    public boolean getPublished(){
-        return published;
-    }
-    public void publish(){
-        published = true;
     }
 }

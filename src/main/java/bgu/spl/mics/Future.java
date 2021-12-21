@@ -33,7 +33,7 @@ public class Future<T> {
 	public T get() {
 		try {
 			while (!isDone)
-				wait();
+				this.wait();
 		}
 		catch(InterruptedException e){
 			return result;
@@ -44,7 +44,7 @@ public class Future<T> {
 	/**
      * Resolves the result of this Future object.
      */
-	public void resolve (T result) {
+	public synchronized void resolve (T result) {
 		this.result=result;
 		isDone=true;
 		notifyAll();

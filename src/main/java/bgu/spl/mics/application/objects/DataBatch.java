@@ -7,14 +7,14 @@ package bgu.spl.mics.application.objects;
 
 public class DataBatch {
 
-    private int size;
-    private int ticks; //ticks to process
+    private final int size;
+    private final int ticks; //ticks to process
     private int processTicks;
     private boolean processed;
     private int trainingTicks;
 
     public DataBatch(int size,int Ticks){
-        size=size;
+        this.size=size;
         this.ticks=Ticks;
         processed=false;
         processTicks=0;
