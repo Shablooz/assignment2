@@ -31,10 +31,12 @@ public class GPUService extends MicroService {
     protected void initialize() {
         subscribeBroadcast(TickBroadcast.class,(tick)->{
             if(!toProcess.isEmpty()) {
-                if(!gpu.isActive())
+                if(!gpu.isActive()) {
+                    gpu.setModel(toProcess.peekFirst().getModel());
                     gpu.activate();
+                }
                 TrainModelEvent e=toProcess.peekFirst();
-                gpu.OnTick(e.getModel());
+                gpu.OnTick();
                 if(e.done()){
                     complete(e,e.getModel());
                     toProcess.removeFirst();

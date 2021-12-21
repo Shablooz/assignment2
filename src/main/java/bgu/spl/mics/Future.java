@@ -33,7 +33,7 @@ public class Future<T> {
 	public T get() {
 		try {
 			while (!isDone)
-				wait();
+				this.wait();
 		}
 		catch(InterruptedException e){
 			return result;

@@ -5,6 +5,7 @@ import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.Messages.*;
 import bgu.spl.mics.application.objects.Model;
 import bgu.spl.mics.application.objects.Student;
+import com.sun.org.apache.xpath.internal.operations.Mod;
 
 /**
  * Student is responsible for sending the {@link TrainModelEvent},
@@ -26,13 +27,22 @@ public class StudentService extends MicroService {
     protected void initialize() {
         subscribeBroadcast(PublishConferenceBroadcast.class,broadcast -> {});
         for(Model model : student.getModels()) {
+            model.StartTraining();
             Future<Model> future =(Future<Model>) sendEvent(new TrainModelEvent(model));
                 if (future != null)
                     synchronized (future){
-                    Model e=future.get();
-            }
-                Future<TestModelEvent> testModelEventFuture=(Future<TestModelEvent>) sendEvent(new TestModelEvent(model));
-                future.get();
+                    model=future.get();
+                    model.FinishTraining();
+                    TrainModelEvent trainModelEvent=new TrainModelEvent(model);
+                    Future<Model> future1 =(Future<Model>) sendEvent(new TestModelEvent(model));
+                    if(future1 !=null)
+                        synchronized (future1) {
+                            model=future1.get();
+                        }
+                    }
+
+
+
         }
 
     }

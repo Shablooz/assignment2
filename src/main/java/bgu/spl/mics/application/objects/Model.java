@@ -11,7 +11,6 @@ public class Model {
     private Status status;
     private final Student student;
     private final String name;
-    private boolean trained=false;
 
     enum Status {
         PreTrained, Training, Trained, Tested
@@ -49,9 +48,8 @@ public class Model {
     public void FinishTraining(){
         if(status==Status.Training)
             status=Status.Trained;
-        trained=true;
     }
-    public void TestModel(){
+    public void FinishTesting(){
         if(status==Status.Trained)
             status=Status.Tested;
     }

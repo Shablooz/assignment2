@@ -64,10 +64,10 @@ public class GPU implements Comparable {
     public boolean isActive() {
         return active;
     }
-
-    public void OnTick(Model model){
-        if(this.model.equals(model))
-            this.model=model;
+    public void setModel(Model model){
+        this.model=model;
+    }
+    public void OnTick(){
         for(DataBatch dataBatch: training) { //process batches and get rid of them if done
             dataBatch.train();
             if (dataBatch.getTrainingTicks() == trainingTicks) {
