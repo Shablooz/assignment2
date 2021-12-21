@@ -1,5 +1,7 @@
 package bgu.spl.mics.application.objects;
 
+import java.util.Base64;
+
 /**
  * Passive object representing a Deep Learning model.
  * Add all the fields described in the assignment as private fields.
@@ -12,8 +14,12 @@ public class Model {
     private final Student student;
     private final String name;
     private boolean noUnprocessedLeft;
+    private results result;
     enum Status {
         PreTrained, Training, Trained, Tested
+    }
+    enum results{
+        None,Good,Bad
     }
 
     public Model(String name, Data data, Student student) {
@@ -22,6 +28,7 @@ public class Model {
         this.student = student;
         status=Status.PreTrained;
         noUnprocessedLeft=false;
+        result=results.None;
     }
     public Boolean Test(){
         if(student.getDegree()== Student.Degree.PhD)
@@ -66,6 +73,12 @@ public class Model {
         if(data.UnprocessedIsEmpty())
             noUnprocessedLeft=true;
         return batch;
+    }
+    public void pass(){
+        result=results.Good;
+    }
+    public void fail(){
+        result=results.Bad;
     }
     public void addProcessedBatch(DataBatch batch){
         data.addProcessed(batch);

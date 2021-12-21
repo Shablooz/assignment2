@@ -25,19 +25,28 @@ public class StudentService extends MicroService {
 
     @Override
     protected void initialize() {
-        subscribeBroadcast(PublishConferenceBroadcast.class,broadcast -> {});
+        subscribeBroadcast(PublishConferenceBroadcast.class,broadcast -> {
+            student.ReadPaper();
+        });
         for(Model model : student.getModels()) {
             model.StartTraining();
-            Future<Model> future =(Future<Model>) sendEvent(new TrainModelEvent(model));
-                if (future != null)
-                    synchronized (future){
-                    model=future.get();
+            Future<Model> trainFuture =(Future<Model>) sendEvent(new TrainModelEvent(model));
+                if (trainFuture != null)
+                    synchronized (trainFuture){
+                    model=trainFuture.get();
+                    System.out.println("Finished training a model");
                     model.FinishTraining();
-                    TestModelEvent testModelEvent=new TestModelEvent(model);
-                    Future<Model> future1 =(Future<Model>) sendEvent(new TestModelEvent(model));
-                    if(future1 !=null)
-                        synchronized (future1) {
-                            model=future1.get();
+                    Future<Boolean> testFuture =(Future<Boolean>) sendEvent(new TestModelEvent(model));
+                    if(testFuture !=null)
+                        synchronized (testFuture) {
+                            Boolean e=testFuture.get();
+                            model.FinishTesting();
+                            if(e){
+                                model.pass();
+                                student.PublishPaper();
+                                sendEvent(new PublishResultsEvent(model));
+                            }
+                            else model.fail();
                         }
                     }
 

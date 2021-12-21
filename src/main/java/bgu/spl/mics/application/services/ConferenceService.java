@@ -5,6 +5,10 @@ import bgu.spl.mics.application.Messages.PublishConferenceBroadcast;
 import bgu.spl.mics.application.Messages.PublishResultsEvent;
 import bgu.spl.mics.application.Messages.TickBroadcast;
 import bgu.spl.mics.application.objects.ConfrenceInformation;
+import bgu.spl.mics.application.objects.Model;
+
+import java.util.ArrayList;
+
 /**
  * Conference service is in charge of
  * after publishing results the conference will unregister from the system.
@@ -15,10 +19,12 @@ import bgu.spl.mics.application.objects.ConfrenceInformation;
  */
 public class ConferenceService extends MicroService {
     private final ConfrenceInformation confrenceInformation;
+    private final ArrayList<Model> results;
     private int ticks;
     public ConferenceService(String name, ConfrenceInformation confrenceInformation) {
         super(name);
         this.confrenceInformation=confrenceInformation;
+        results=new ArrayList<>();
 
     }
 
@@ -27,7 +33,10 @@ public class ConferenceService extends MicroService {
         subscribeBroadcast(TickBroadcast.class,(e)->{
             ticks++;
             if(ticks==confrenceInformation.getDate())
-                sendBroadcast(new PublishConferenceBroadcast());
+                sendBroadcast(new PublishConferenceBroadcast(results));
+        });
+        subscribeEvent(PublishResultsEvent.class,(res)->{
+            results.add(res.getResult());
         });
 
     }

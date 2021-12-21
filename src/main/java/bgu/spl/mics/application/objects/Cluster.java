@@ -51,7 +51,7 @@ public class Cluster {
 		return toProcessBatches.get(cpu);
 	}
 	public DataBatch getNextBatch(CPU cpu) {
-		synchronized (GPUs) {
+		synchronized (activeGPUs) {
 			DataBatch batch = null;
 			if (!activeGPUs.isEmpty()) {
 				GPU chosenGPU = null;

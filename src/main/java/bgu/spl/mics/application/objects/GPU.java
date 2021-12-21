@@ -74,7 +74,7 @@ public class GPU implements Comparable {
         this.model=model;
         noUnprocessedLeft=false;
     }
-    public  void OnTick(){
+    public void OnTick(){
         DataBatch batch;
         Iterator<DataBatch> iterator=training.iterator();
         while(iterator.hasNext()) {   //process batches and get rid of them if done
