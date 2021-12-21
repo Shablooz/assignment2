@@ -15,7 +15,7 @@ public class Model {
     private final String name;
     private boolean noUnprocessedLeft;
     private results result;
-    enum Status {
+    public enum Status {
         PreTrained, Training, Trained, Tested
     }
     enum results{
