@@ -35,7 +35,6 @@ public class ConferenceService extends MicroService {
             ticks++;
             if(ticks==confrenceInformation.getDate()) {
                 sendBroadcast(new PublishConferenceBroadcast(results));
-                System.out.println("Conference Published");
             }
         });
         subscribeEvent(PublishResultsEvent.class,(res)->{

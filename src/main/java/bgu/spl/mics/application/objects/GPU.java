@@ -1,9 +1,7 @@
 package bgu.spl.mics.application.objects;
 
-import bgu.spl.mics.application.Messages.TrainModelEvent;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Iterator;
 
 /**
@@ -79,10 +77,6 @@ public class GPU implements Comparable {
     public boolean isActive() {
         return active;
     }
-    //public void setModel(Model model){
-    //    this.model=model;
-    //    noUnprocessedLeft=false;
-    //}
     public void OnTick(){
         ticks++;
         DataBatch batch;
@@ -135,5 +129,8 @@ public class GPU implements Comparable {
             noUnprocessedLeft=true;
         }
         return batch;
+    }
+    public void Activatetest(){
+        active = true;
     }
 }

@@ -29,7 +29,7 @@ public class StudentService extends MicroService {
             for(Model model:broadcast.getResults())
                 if(model.getStudent()!=student) {
                     student.ReadPaper();
-                    System.out.printf(getName() + "Read a paper, model"+model.getName());
+                    System.out.println(getName() + " Read a paper, model "+model.getName());
                 }
         });
         for(Model model : student.getModels()) {

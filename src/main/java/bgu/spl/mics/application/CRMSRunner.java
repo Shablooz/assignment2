@@ -22,8 +22,8 @@ import java.util.Set;
 public class CRMSRunner {
     public static void main(String[] args) {
         Set<Thread> threadSet=Thread.getAllStackTraces().keySet(); //debug
-        File input = new File("example_input.json");
-        //File input = new File(args[0]); /* FINAL TOUCH */
+        //File input = new File("example_input.json");
+        File input = new File(args[0]);
         try {
             JsonElement fileElement = JsonParser.parseReader(new FileReader(input));
             JsonObject fileObject = fileElement.getAsJsonObject();

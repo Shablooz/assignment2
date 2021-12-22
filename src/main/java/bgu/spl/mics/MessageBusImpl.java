@@ -136,7 +136,15 @@ public class MessageBusImpl implements MessageBus {
 
 
 	}
-
+	public ConcurrentHashMap<Class<? extends Message>,Deque<MicroService>> getSubscribedMircoServiceEvent(){
+		return SubscribedMircoServiceEvent;
+	}
+	public ConcurrentHashMap<Class<? extends Broadcast>,Deque<MicroService>> getSubscribedMircoServiceBroadCasts(){
+		return SubscribedMircoServiceBroadCasts;
+	}
+	public ConcurrentHashMap<MicroService, Deque<Message>> getRegisteredServices(){
+		return registeredServices;
+	}
 
 
 }
