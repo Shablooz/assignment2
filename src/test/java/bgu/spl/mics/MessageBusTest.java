@@ -56,12 +56,13 @@ public class MessageBusTest {
     }
     @Test
     public void testRegister(){
-
-
+        bus.register(microService);
+        assertNotNull(bus.getRegisteredServices().get(microService));
     }
     @Test
     public void testUnregister(){
-        bus.subscribeEvent(event.getClass(),microService);
+        bus.unregister(microService);
+        assertNull(bus.getRegisteredServices().get(microService));
 
     }
     @Test
