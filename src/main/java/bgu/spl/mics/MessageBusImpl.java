@@ -12,7 +12,7 @@ public class MessageBusImpl implements MessageBus {
 
 	private final ConcurrentHashMap<MicroService, Deque<Message>> registeredServices;
 	private final ConcurrentHashMap<Class<? extends Message>,Deque<MicroService>> SubscribedMircoServiceEvent;
-	private final ConcurrentHashMap<Class<? extends Broadcast>,Deque<MicroService>> SubscribedMircoServiceBroadCasts;
+	private final ConcurrentHashMap<Class<? extends Message>,Deque<MicroService>> SubscribedMircoServiceBroadCasts;
 	private final ConcurrentHashMap<Event,Future> ActiveFutures;
 
 	private  static  final class InstanceHolder {
@@ -119,6 +119,12 @@ public class MessageBusImpl implements MessageBus {
 		return registeredServices.get(m).poll();
 
 
+	}
+	public ConcurrentHashMap<Class<? extends Message>,Deque<MicroService>> getSubscribedMircoServiceEvent(){
+		return SubscribedMircoServiceEvent;
+	}
+	public ConcurrentHashMap<Class<? extends Message>,Deque<MicroService>> getSubscribedMircoServiceBroadCasts(){
+		return SubscribedMircoServiceBroadCasts;
 	}
 
 

@@ -59,6 +59,9 @@ public class GPU implements Comparable {
     public int getTicks(){
         return ticks;
     }
+    public boolean getActive(){
+        return active;
+    }
     public void activate() {
         Cluster.getInstance().SetActiveGPU(this);
         active=true;
@@ -122,5 +125,8 @@ public class GPU implements Comparable {
             noUnprocessedLeft=true;
         }
         return batch;
+    }
+    public Model getModel(){
+        return model;
     }
 }
