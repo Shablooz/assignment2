@@ -2,8 +2,11 @@ package bgu.spl.mics.application.objects;
 
 
 
+import javafx.collections.transformation.SortedList;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.PriorityBlockingQueue;
 
 /**
@@ -16,11 +19,11 @@ import java.util.concurrent.PriorityBlockingQueue;
 public class Cluster {
 
 	private final ArrayList<GPU> GPUs;
-	private final PriorityBlockingQueue<GPU> activeGPUs; //faster gpus come first
+	private final ArrayList<GPU> activeGPUs; //faster gpus come first
 	private final PriorityBlockingQueue<CPU> CPUs;
 	private final HashMap<GPU, Deque<DataBatch>> processedBatches;
 	private final ConcurrentHashMap<CPU, DataBatch> toProcessBatches;
-	private final HashMap<GPU,Integer> inProcessing;
+	//private final HashMap<GPU,Integer> inProcessing;
 	private final HashMap<CPU,GPU> batchProcessingAllocation;
 
 
@@ -30,66 +33,60 @@ public class Cluster {
 	}
 	private Cluster(){
 		GPUs=new ArrayList<>();
-		activeGPUs=new PriorityBlockingQueue<>();
+		activeGPUs=new ArrayList<>();
 		CPUs=new PriorityBlockingQueue<>();
 		toProcessBatches=new ConcurrentHashMap<>();
 		processedBatches=new HashMap<>();
 		batchProcessingAllocation=new HashMap<>();
-		inProcessing=new HashMap<>();
+	//	inProcessing=new HashMap<>();
 	}
 	public static Cluster getInstance(){
 		return Cluster.InstanceHolder.instance;
 	}
 	public synchronized DataBatch getProcessedBatch(GPU gpu){
-		ArrayDeque<DataBatch> a= (ArrayDeque<DataBatch>) processedBatches.get(gpu);
-		if(!a.isEmpty()){
-			return a.remove();
+		ArrayDeque<DataBatch> array= (ArrayDeque<DataBatch>) processedBatches.get(gpu);
+		synchronized (array){
+		if(!array.isEmpty()) {
+			return array.remove();
 		}
+		}
+
 		return null;
 	}
 	public DataBatch ProcessBatch(CPU cpu) {
 		return toProcessBatches.get(cpu);
 	}
 	public DataBatch getNextBatch(CPU cpu) {
-		synchronized (activeGPUs) {
 			DataBatch batch = null;
 			if (!activeGPUs.isEmpty()) {
-				GPU chosenGPU = null;
-				boolean foundGPU = false;
-				for (GPU gpu : activeGPUs) {
-					if ((gpu.getInProcessing() + inProcessing.get(gpu)) <= gpu.getVRAM() && !gpu.getNoUnprocessedLeft()) {
-						chosenGPU = gpu;
-						foundGPU = true;
-						break;
+				GPU chosenGPU = activeGPUs.get(0);
+				synchronized (activeGPUs) {
+					for (GPU gpu : activeGPUs) {
+						if (gpu.compareTo(chosenGPU) > 0 && !gpu.getNoUnprocessedLeft()) {
+							chosenGPU = gpu;
+						}
+					}
+					batch = chosenGPU.getBatchToProcess();
+				}
+					if(batch!=null) {
+					//	inProcessing.merge(chosenGPU, 1, Integer::sum); //if there is no value, it becomes 1, else it grows by one
+						toProcessBatches.put(cpu, batch);
+						batchProcessingAllocation.put(cpu, chosenGPU);
 					}
 				}
-				if (!foundGPU) {
-					for (GPU gpu : activeGPUs)
-						if (!gpu.getNoUnprocessedLeft())
-							chosenGPU = gpu; //quickest gpu, if no more fitting gpu is found
-				}
-				if (foundGPU) {
-
-
-					inProcessing.merge(chosenGPU, 1, Integer::sum); //if there is no value, it becomes 1, else it grows by one
-					assert chosenGPU != null;
-					batch = chosenGPU.getBatchToProcess();
-
-					toProcessBatches.put(cpu, batch);
-					batchProcessingAllocation.put(cpu, chosenGPU);
-				}
-			}
-
 			return batch;
-		}
+
 
 	}
 	public void finishBatch(CPU cpu) {
 		synchronized (activeGPUs){
 		DataBatch batch = toProcessBatches.get(cpu);
 		GPU gpu = batchProcessingAllocation.get(cpu);
-		processedBatches.get(gpu).addLast(batch);
-		inProcessing.merge(gpu, -1, Integer::sum);
+		Deque<DataBatch> batchQueue=processedBatches.get(gpu);
+		synchronized (batchQueue) {
+			batchQueue.addLast(batch);
+		}
+	//	inProcessing.merge(gpu, -1, Integer::sum);
 	}
 	}
 
@@ -111,7 +108,7 @@ public class Cluster {
 	}
 	public void initialize(){
 		for(GPU gpu: GPUs){
-			inProcessing.put(gpu, 0);
+		//	inProcessing.put(gpu, 0);
 			processedBatches.put(gpu,new ArrayDeque<>());
 		}
 	//	for(CPU cpu: CPUs){

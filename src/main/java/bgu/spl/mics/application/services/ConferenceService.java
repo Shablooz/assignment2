@@ -4,6 +4,7 @@ import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.Messages.PublishConferenceBroadcast;
 import bgu.spl.mics.application.Messages.PublishResultsEvent;
 import bgu.spl.mics.application.Messages.TickBroadcast;
+import bgu.spl.mics.application.Messages.TimeoutBroadCast;
 import bgu.spl.mics.application.objects.ConfrenceInformation;
 import bgu.spl.mics.application.objects.Model;
 
@@ -32,11 +33,16 @@ public class ConferenceService extends MicroService {
     protected void initialize() {
         subscribeBroadcast(TickBroadcast.class,(e)->{
             ticks++;
-            if(ticks==confrenceInformation.getDate())
+            if(ticks==confrenceInformation.getDate()) {
                 sendBroadcast(new PublishConferenceBroadcast(results));
+                System.out.println("Conference Published");
+            }
         });
         subscribeEvent(PublishResultsEvent.class,(res)->{
             results.add(res.getResult());
+        });
+        subscribeBroadcast(TimeoutBroadCast.class, time->{
+            terminate();
         });
 
     }

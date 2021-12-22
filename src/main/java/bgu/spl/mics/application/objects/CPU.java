@@ -26,7 +26,7 @@ public class CPU implements Comparable {
     public void tick(){
         timeUsed++;
     }
-    public void processBatch(){
+    public void addBatchesProcessed(){
         batchesProcessed++;
     }
     public void ProcessBatch(){

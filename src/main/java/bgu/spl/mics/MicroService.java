@@ -128,6 +128,7 @@ public abstract class MicroService implements Runnable {
      */
     protected final <T> void complete(Event<T> e, T result) {
         MessageBusImpl.getInstence().complete(e,result);
+
     }
 
     /**

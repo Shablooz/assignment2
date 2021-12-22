@@ -29,6 +29,7 @@ public class GPU implements Comparable {
     private boolean active;
     private boolean noUnprocessedLeft;
     private int ticks;
+    private Object trainObj=new Object();
 
     public GPU(Type type){
         if(type==Type.RTX3090) {
@@ -59,13 +60,16 @@ public class GPU implements Comparable {
     public int getTicks(){
         return ticks;
     }
-    public void activate() {
+    public void activate(Model model) {
         Cluster.getInstance().SetActiveGPU(this);
+        this.model=model;
         active=true;
     }
     public void deactivate() {
         Cluster.getInstance().SetInactiveGPU(this);
         active=false;
+        noUnprocessedLeft=false;
+        model=null;
     }
 
     public boolean getNoUnprocessedLeft() {
@@ -75,10 +79,10 @@ public class GPU implements Comparable {
     public boolean isActive() {
         return active;
     }
-    public void setModel(Model model){
-        this.model=model;
-        noUnprocessedLeft=false;
-    }
+    //public void setModel(Model model){
+    //    this.model=model;
+    //    noUnprocessedLeft=false;
+    //}
     public void OnTick(){
         ticks++;
         DataBatch batch;
@@ -89,7 +93,9 @@ public class GPU implements Comparable {
             if (batch.getTrainingTicks() == trainingTicks) {
                 model.addProcessedBatch(batch);
                 iterator.remove();
-                inProcessing--;
+                synchronized (trainObj) {
+                    inProcessing--;
+                }
             }
         }
         int spaces=VRAM-inProcessing;
@@ -98,17 +104,24 @@ public class GPU implements Comparable {
             if(dataBatch==null)
                 break;
             training.add(dataBatch);
-            inProcessing++;
+            synchronized (trainObj) {
+                inProcessing++;
+            }
         }
     }
     @Override
-    public int compareTo(Object o) {
-        GPU gpu=(GPU)o;
-        if(inProcessing==0)
-            return -1;
-        else if(gpu.getInProcessing()==0)
-            return +1;
-        else return Integer.compare(gpu.getVRAM()/gpu.getInProcessing(),VRAM/inProcessing);
+    public  int compareTo(Object o) {
+        synchronized (trainObj) {
+            GPU gpu = (GPU) o;
+            if (this.equals(o))
+                return 0;
+            if (inProcessing == 0)
+                return 1;
+            else if (gpu.getInProcessing() == 0)
+                return -1;
+            else
+                return Integer.compare(VRAM / inProcessing, gpu.getVRAM() / getInProcessing()); //process trained while a thread is on this line, may throw exception
+        }
     }
     public boolean isFull(){
         return inProcessing<VRAM;

@@ -3,6 +3,7 @@ package bgu.spl.mics.application.services;
 import bgu.spl.mics.MessageBusImpl;
 import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.Messages.TickBroadcast;
+import bgu.spl.mics.application.Messages.TimeoutBroadCast;
 
 import java.util.Timer;
 import java.util.concurrent.TimeUnit;
@@ -20,11 +21,12 @@ public class TimeService extends MicroService{
 
 	final int duration;
 	final int speed;
-
-	public TimeService(int speed,int duration) {
+	final Object stopEvent;
+	public TimeService(int speed,int duration,Object stopEvent) {
 		super("Time_Service");
 		this.duration=duration;
 		this.speed=speed;
+		this.stopEvent=stopEvent;
 	}
 
 	@Override
@@ -32,10 +34,14 @@ public class TimeService extends MicroService{
 		for(int i=0;i<duration;i++) {
 			sendBroadcast(new TickBroadcast());
 			try {
-				wait(speed);
+					wait(speed);
 			}
 			catch (InterruptedException ignore){}
 		}
-
+		sendBroadcast(new TimeoutBroadCast());
+		synchronized (stopEvent) {
+			stopEvent.notifyAll();
+			terminate();
+		}
 	}
 }

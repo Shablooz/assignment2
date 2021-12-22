@@ -2,6 +2,7 @@ package bgu.spl.mics.application.services;
 
 import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.Messages.TickBroadcast;
+import bgu.spl.mics.application.Messages.TimeoutBroadCast;
 import bgu.spl.mics.application.objects.CPU;
 
 /**
@@ -27,9 +28,12 @@ public class CPUService extends MicroService {
                 cpu.tick();
             } else if (cpu.ProcessNextBatch()) {
                 cpu.tick();
-                cpu.processBatch();
+                cpu.addBatchesProcessed();
             }
 
+        });
+        subscribeBroadcast(TimeoutBroadCast.class, time->{
+            terminate();
         });
     }
 }

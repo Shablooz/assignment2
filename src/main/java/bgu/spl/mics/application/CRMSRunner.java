@@ -29,7 +29,7 @@ public class CRMSRunner {
             JsonObject fileObject = fileElement.getAsJsonObject();
             Integer TickTime = fileObject.get("TickTime").getAsInt();
             Integer Duration = fileObject.get("Duration").getAsInt();
-
+            ArrayList<Thread> threads=new ArrayList<>();
             JsonArray jsonArrayStudents = fileObject.get("Students").getAsJsonArray();
             List<Student> students = new ArrayList<>();
             for (JsonElement studentElement:jsonArrayStudents) {
@@ -42,7 +42,7 @@ public class CRMSRunner {
                 Student student = new Student(name, department, degree);
                 for (JsonElement modelElement:jsonArrayModels) {
                     JsonObject modelJsonObject = modelElement.getAsJsonObject();
-                    String modelName = studentJsonObject.get("name").getAsString();
+                    String modelName = modelJsonObject.get("name").getAsString();
                     String typeS = modelJsonObject.get("type").getAsString();
                     Data.Type type = Data.Type.valueOf(typeS);
                     int size = modelJsonObject.get("size").getAsInt();
@@ -78,6 +78,7 @@ public class CRMSRunner {
                 CPUService cpuService=new CPUService(cores+"",cpu);
                 Thread cpuThread=new Thread(cpuService);
                 cpuThread.start();
+                threads.add(cpuThread);
                 Cluster.getInstance().addCPU(cpu);
             }
             ArrayList<GPU> gpus=new ArrayList<>();
@@ -89,6 +90,7 @@ public class CRMSRunner {
                 GPUService gpuService=new GPUService(type+"",gpu,waitForGPU);
                 Thread gpuThread=new Thread(gpuService);
                 gpuThread.start();
+                threads.add(gpuThread);
                 Cluster.getInstance().addGPU(gpu);
             }
             synchronized (waitForGPU){
@@ -101,17 +103,28 @@ public class CRMSRunner {
                 ConferenceService conferenceService=new ConferenceService(conference.getName(),conference);
                 Thread cThread=new Thread(conferenceService);
                 cThread.start();
+                threads.add(cThread);
+
             }
             for(Student student: students){
                 StudentService studentService=new StudentService(student.getName(),student);
                 Thread sThread=new Thread(studentService);
                 sThread.start();
+                threads.add(sThread);
+
             }
             Cluster.getInstance().initialize();
-            TimeService timeService=new TimeService(TickTime, Duration);
+            Object stopEvent=new Object();
+            TimeService timeService=new TimeService(TickTime, Duration,stopEvent);
             Thread timeThread=new Thread(timeService);
             timeThread.start();
-
+            threads.add(timeThread);
+            synchronized (stopEvent){
+                try{
+                    stopEvent.wait(); //wait for at least one gpu to finish subscribing, before sending models for training
+                }
+                catch (InterruptedException ignored){}
+            }
             //OUTPUT
             StringBuilder OutputS = new StringBuilder();
             OutputS.append("Students:\n");
@@ -162,6 +175,8 @@ public class CRMSRunner {
             OutputS.append("cpuTimeUsed: ").append(cpuTime).append("\n");
             OutputS.append("gpuTimeUsed: ").append(gpuTime).append("\n");
             OutputS.append("batchesProcessed: ").append(cpuBatches).append("\n");
+            for(Thread thread: threads)
+                thread.stop();
             File Output = new File("Output.txt");
             FileWriter myWriter = new FileWriter("Output.txt");
             myWriter.write(String.valueOf(OutputS));

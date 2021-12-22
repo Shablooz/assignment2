@@ -27,8 +27,10 @@ public class StudentService extends MicroService {
     protected void initialize() {
         subscribeBroadcast(PublishConferenceBroadcast.class,broadcast -> {
             for(Model model:broadcast.getResults())
-                if(model.getStudent()!=student)
+                if(model.getStudent()!=student) {
                     student.ReadPaper();
+                    System.out.printf(getName() + "Read a paper, model"+model.getName());
+                }
         });
         for(Model model : student.getModels()) {
             model.StartTraining();
@@ -36,7 +38,7 @@ public class StudentService extends MicroService {
                 if (trainFuture != null)
                     synchronized (trainFuture){
                     model=trainFuture.get();
-                    System.out.println("Finished training a model");
+                    System.out.println(student.getName()+" Finished training a model named "+model.getName());
                     model.FinishTraining();
                     Future<Boolean> testFuture =(Future<Boolean>) sendEvent(new TestModelEvent(model));
                     if(testFuture !=null)
@@ -55,6 +57,9 @@ public class StudentService extends MicroService {
 
 
         }
+        subscribeBroadcast(TimeoutBroadCast.class,time->{
+            terminate();
+        });
 
     }
 }

@@ -21,7 +21,7 @@ public class Data {
     private int processed;
     private int size;
     private int ticks; //to process batch (independent of cpu, final amount of ticks depends on cores)
-    private ArrayDeque<DataBatch> UnprocessedBatches;
+    private final ArrayDeque<DataBatch> UnprocessedBatches;
     private ArrayList<DataBatch> ProcessedBatches;
 
     public Data(Type type,int size){
@@ -38,7 +38,7 @@ public class Data {
         processed=0;
         for(int i=0;i<size/1000;i++)
             UnprocessedBatches.addFirst(new DataBatch(1000,ticks));
-        if(ticks%1000!=0)
+        if(size%1000!=0)
             UnprocessedBatches.addFirst(new DataBatch(size%1000,ticks)); //left over batch of size <=1000
 
     }
@@ -65,7 +65,11 @@ public class Data {
     }
 
     public DataBatch getDataBatchToProcess() {
-        return UnprocessedBatches.removeFirst();
+        synchronized (UnprocessedBatches) {
+            if (!UnprocessedBatches.isEmpty())
+                return UnprocessedBatches.removeFirst();
+            else return null;
+        }
     }
     public void addProcessed(DataBatch batch){
         ProcessedBatches.add(batch);

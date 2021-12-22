@@ -14,6 +14,7 @@ public class MessageBusImpl implements MessageBus {
 	private final ConcurrentHashMap<Class<? extends Message>,Deque<MicroService>> SubscribedMircoServiceEvent;
 	private final ConcurrentHashMap<Class<? extends Broadcast>,Deque<MicroService>> SubscribedMircoServiceBroadCasts;
 	private final ConcurrentHashMap<Event,Future> ActiveFutures;
+	private boolean timeout=false;
 
 	private  static  final class InstanceHolder {
 		static final MessageBusImpl instance = new MessageBusImpl();
@@ -66,13 +67,17 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	public void sendBroadcast(Broadcast b) {
 		Queue<MicroService> subbed=SubscribedMircoServiceBroadCasts.get(b.getClass());
-		if(subbed!=null)
-			for(MicroService service : subbed) {
-				synchronized (service) {
-					registeredServices.get(service).add(b);
-					service.notifyAll();
+		if(subbed!=null) {
+				for (MicroService service : subbed) {
+						Deque<Message> events = registeredServices.get(service);
+						synchronized (events) {
+							events.add(b);
+						}
+						synchronized (service) {
+							service.notifyAll();
+						}
 				}
-			}
+		}
 	}
 
 
@@ -80,17 +85,28 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	public <T> Future<T> sendEvent(Event<T> e) {
 			Queue<MicroService> subbed = SubscribedMircoServiceEvent.get(e.getClass());
-			if (subbed == null || subbed.isEmpty())
-				return null;
+			synchronized (subbed) {
+				if (subbed == null || subbed.isEmpty())
+					return null;
 				Future<T> future = new Future<T>();
 				ActiveFutures.put(e, future);
 				MicroService m = subbed.poll();
+				while (!registeredServices.containsKey(m)) {
+					if (subbed.isEmpty())
+						return null;
+					m = subbed.poll();
+				}
 				subbed.add(m);
-			synchronized (m) {
-				registeredServices.get(m).add(e);
-				m.notifyAll();
+				synchronized (m) {
+					Deque<Message> events = registeredServices.get(m);
+					synchronized (events) {
+						events.add(e);
+						m.notifyAll();
+					}
+				}
+
+				return future;
 			}
-			return future;
 		}
 
 

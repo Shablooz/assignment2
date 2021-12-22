@@ -33,21 +33,25 @@ public class GPUService extends MicroService {
         subscribeBroadcast(TickBroadcast.class,(tick)->{
             if(!toProcess.isEmpty()) {
                 if(!gpu.isActive() && !gpu.getNoUnprocessedLeft()) {
-                    gpu.setModel(toProcess.peekFirst().getModel());
-                    gpu.activate();
+                    gpu.activate(toProcess.peekFirst().getModel());
                 }
                 TrainModelEvent e=toProcess.peekFirst();
                 gpu.OnTick();
                 if(e.done()){
                     complete(e,e.getModel());
                     toProcess.removeFirst();
-                    if(toProcess.isEmpty())
-                        gpu.deactivate();
+                    gpu.deactivate();
                 }
             }
 
 
 
+        });
+        subscribeBroadcast(TimeoutBroadCast.class,time->{
+            for(TrainModelEvent modelEvent: toProcess) {
+                complete(modelEvent, modelEvent.getModel());
+            }
+            terminate();
         });
         subscribeEvent(TrainModelEvent.class,model -> {
             toProcess.addLast(model);
